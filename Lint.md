@@ -38,6 +38,8 @@ Lintとして定めるべきコーディングルール。
 3. インデントは原則として空白2つ
 4. エンコーディングはutf-8
 5. 改行文字はLF
+6. Trailing spacesの禁止
+    - コード上意味を持たないスペース・タブ文字が改行文字の前に来ることは禁止
 
 ## イミュータビリティ
 
@@ -54,7 +56,7 @@ if (lang == "ja") {
 }
 
 // これはOK
-let hello = lang == "ja"
+const hello = lang == "ja"
   ? hello = "こんにちは"
   : hello = "Hello";
 ```

@@ -9,7 +9,7 @@ import { CacheEntry, Url } from './types';
 
 /**
  * キャッシュからエントリを取得
- * 
+ *
  * @param url - 検索するURL
  * @param cache - キャッシュエントリの配列
  * @returns 見つかったキャッシュエントリ、または undefined
@@ -23,9 +23,9 @@ export const getCacheEntry = (
 
 /**
  * キャッシュにエントリを追加（イミュータブル）
- * 
+ *
  * 既に同じURLのエントリが存在する場合は、それを新しいエントリで置き換える
- * 
+ *
  * @param cache - 既存のキャッシュエントリの配列
  * @param entry - 追加する新しいキャッシュエントリ
  * @returns 新しいエントリを含む更新されたキャッシュ配列
@@ -41,9 +41,9 @@ export const addCacheEntry = (
 
 /**
  * URLが変更されたか確認
- * 
+ *
  * キャッシュ内のエントリと比較して、エンコードされたデータが変更されているか確認
- * 
+ *
  * @param url - 確認するURL
  * @param encodedData - 現在のエンコードされたデータ
  * @param cache - キャッシュエントリの配列
@@ -55,19 +55,19 @@ export const hasUrlChanged = (
   cache: ReadonlyArray<CacheEntry>,
 ): boolean => {
   const entry = getCacheEntry(url, cache);
-  
+
   // エントリが存在しない場合は「変更された」とみなす（新規URL）
   if (!entry) {
     return true;
   }
-  
+
   // エンコードされたデータが異なる場合は変更されている
   return entry.encodedData !== encodedData;
 };
 
 /**
  * キャッシュをファイルシステムから読み込む
- * 
+ *
  * @param cacheFilePath - キャッシュファイルのパス
  * @returns 読み込まれたキャッシュエントリの配列
  */
@@ -77,12 +77,12 @@ export const loadCache = async (
   try {
     const content = await fs.readFile(cacheFilePath, 'utf-8');
     const parsed = JSON.parse(content);
-    
+
     // 配列であることを確認
     if (!Array.isArray(parsed)) {
       return [];
     }
-    
+
     return parsed as ReadonlyArray<CacheEntry>;
   } catch {
     // ファイルが存在しない場合や読み込みエラーの場合は空の配列を返す
@@ -92,7 +92,7 @@ export const loadCache = async (
 
 /**
  * キャッシュをファイルシステムに保存
- * 
+ *
  * @param cacheFilePath - キャッシュファイルのパス
  * @param cache - 保存するキャッシュエントリの配列
  */
@@ -103,7 +103,7 @@ export const saveCache = async (
   // ディレクトリが存在しない場合は作成
   const dir = path.dirname(cacheFilePath);
   await fs.mkdir(dir, { recursive: true });
-  
+
   // キャッシュをJSON形式で保存
   const content = JSON.stringify(cache, null, 2);
   await fs.writeFile(cacheFilePath, content, 'utf-8');

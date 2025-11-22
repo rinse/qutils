@@ -14,7 +14,7 @@ let browserInstance: Browser | null = null;
 
 /**
  * ブラウザインスタンスを取得（既存のものを再利用または新規作成）
- * 
+ *
  * @returns Puppeteerのブラウザインスタンス
  */
 const getBrowser = async (): Promise<Browser> => {
@@ -43,13 +43,13 @@ export const closeBrowser = async (): Promise<void> => {
 
 /**
  * QuiverのページからSVGを生成
- * 
+ *
  * Quiverはcanvasベースのレンダリングを使用しているため、
  * スクリーンショットを撮影してSVGラッパーで包む
- * 
+ *
  * 注: 理想的にはQuiverのネイティブSVGエクスポート機能を使用すべきだが、
  * Quiverの内部APIが不安定なため、スクリーンショットアプローチを採用
- * 
+ *
  * @param page - Puppeteerのページインスタンス
  * @returns SVG文字列（PNG画像を埋め込んだSVG）
  * @throws ページからSVGを生成できない場合
@@ -121,11 +121,11 @@ const extractSvgFromPage = async (page: Page): Promise<string> => {
 /**
  * ブラウザを使用してQuiverからSVGを取得
  * Puppeteerを使用してQuiverのページにアクセスし、レンダリングされたSVGを抽出
- * 
+ *
  * @param url - QuiverのURL
  * @returns SVG文字列
  * @throws SVG生成に失敗した場合
- * 
+ *
  * 要件: 1.3, 6.1, 6.3
  */
 export const generateSvgFromBrowser = async (url: Url): Promise<string> => {
@@ -171,11 +171,11 @@ export const generateSvgFromBrowser = async (url: Url): Promise<string> => {
 /**
  * 設定に基づいてSVGを生成
  * 初期実装ではBrowserStrategyのみをサポート
- * 
+ *
  * @param config - SVG生成の設定
  * @returns SVG文字列
  * @throws SVG生成に失敗した場合
- * 
+ *
  * 要件: 1.3
  */
 export const generateSvg = async (config: SvgGenerationConfig): Promise<string> => {

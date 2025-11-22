@@ -102,7 +102,7 @@ const parseEdge = (edgeData: unknown, index: number): Edge => {
 
 /**
  * Base64エンコードされたデータをデコードしてDiagramDataに変換
- * 
+ *
  * @param encodedData - Base64エンコードされた図式データ
  * @returns デコードされた図式データ
  * @throws DecodeError - デコードに失敗した場合
@@ -111,7 +111,7 @@ export const decodeQuiverData = (encodedData: string): DiagramData => {
   try {
     // Base64デコード
     const jsonString = Buffer.from(encodedData, 'base64').toString('utf-8');
-    
+
     // JSONパース
     const parsed = JSON.parse(jsonString);
 
@@ -149,7 +149,7 @@ export const decodeQuiverData = (encodedData: string): DiagramData => {
 
 /**
  * 図式データの妥当性を検証
- * 
+ *
  * @param data - 検証する図式データ
  * @returns データが妥当な場合true、そうでない場合false
  */
@@ -162,13 +162,13 @@ export const validateDiagramData = (data: DiagramData): boolean => {
   // 各ノードの検証
   const nodeIds = new Set<number>();
   for (const node of data.nodes) {
-    if (typeof node.id !== 'number' || 
-        typeof node.x !== 'number' || 
-        typeof node.y !== 'number' || 
+    if (typeof node.id !== 'number' ||
+        typeof node.x !== 'number' ||
+        typeof node.y !== 'number' ||
         typeof node.label !== 'string') {
       return false;
     }
-    
+
     // IDの重複チェック
     if (nodeIds.has(node.id)) {
       return false;
@@ -184,8 +184,8 @@ export const validateDiagramData = (data: DiagramData): boolean => {
   // 各エッジの検証
   const edgeIds = new Set<number>();
   for (const edge of data.edges) {
-    if (typeof edge.id !== 'number' || 
-        typeof edge.source !== 'number' || 
+    if (typeof edge.id !== 'number' ||
+        typeof edge.source !== 'number' ||
         typeof edge.target !== 'number') {
       return false;
     }

@@ -26,6 +26,7 @@ module.exports = [
       }],
       'indent': ['error', 2],
       'linebreak-style': ['error', 'unix'],
+      'no-trailing-spaces': 'error',
       'no-var': 'error',
       'prefer-const': 'error',
       '@typescript-eslint/no-unused-vars': ['error', {

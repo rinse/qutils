@@ -16,7 +16,7 @@ const QUIVER_URL_PATTERN = /https:\/\/q\.uiver\.app\/#q=([A-Za-z0-9_-]+={0,2})/g
 /**
  * 生のURL文字列からQuiverUrlを構築
  * URLが不正な形式の場合はUrlParseErrorをスロー
- * 
+ *
  * @param url - 解析対象のURL文字列
  * @param position - マークダウンファイル内の位置
  * @returns 解析済みのQuiverUrl
@@ -28,7 +28,7 @@ export const parseQuiverUrl = (
 ): QuiverUrl => {
   // URLがQuiverのURLパターンに一致するか確認
   const match = url.match(/https:\/\/q\.uiver\.app\/#q=([A-Za-z0-9_-]+={0,2})/);
-  
+
   if (!match || !match[1]) {
     const error: UrlParseError = {
       type: 'url-parse-error',
@@ -50,22 +50,22 @@ export const parseQuiverUrl = (
 /**
  * マークダウンコンテンツからQuiverのURLを抽出
  * 不正なURLはスキップされ、有効なURLのみ返される
- * 
+ *
  * @param content - マークダウンコンテンツ
  * @returns 検出されたQuiverUrlの配列
  */
 export const extractQuiverUrls = (content: string): ReadonlyArray<QuiverUrl> => {
   const urls: QuiverUrl[] = [];
-  
+
   // グローバルマッチでQuiverのURLを検出
   const regex = new RegExp(QUIVER_URL_PATTERN);
   let match: RegExpExecArray | null;
-  
+
   while ((match = regex.exec(content)) !== null) {
     const url = match[0];
     const start = match.index;
     const end = start + url.length;
-    
+
     try {
       // parseQuiverUrlを使用して検証
       const quiverUrl = parseQuiverUrl(url, { start, end });
@@ -77,13 +77,13 @@ export const extractQuiverUrls = (content: string): ReadonlyArray<QuiverUrl> => 
       continue;
     }
   }
-  
+
   return urls;
 };
 
 /**
  * URLが既に画像参照に置き換えられているか確認
- * 
+ *
  * @param content - マークダウンコンテンツ
  * @param url - 確認対象のQuiverUrl
  * @returns URLが画像参照に置き換えられている場合はtrue
@@ -92,14 +92,14 @@ export const isUrlReplaced = (content: string, url: QuiverUrl): boolean => {
   // URLの前後のコンテキストを確認
   const beforeUrl = content.substring(Math.max(0, url.position.start - 50), url.position.start);
   const afterUrl = content.substring(url.position.end, Math.min(content.length, url.position.end + 50));
-  
+
   // URLの前に画像参照の開始パターンがあるか確認
   // ![...](の形式
   const hasImageRefBefore = /!\[.*?\]\($/.test(beforeUrl);
-  
+
   // URLの後に画像参照の終了パターンがあるか確認
   // )の形式
   const hasImageRefAfter = /^\)/.test(afterUrl);
-  
+
   return hasImageRefBefore && hasImageRefAfter;
 };

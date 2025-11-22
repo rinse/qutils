@@ -11,7 +11,7 @@ import type { CacheEntry, SvgGenerationConfig } from './types';
 
 /**
  * キャッシュファイルのパスを取得
- * 
+ *
  * @param workspaceFolder - ワークスペースフォルダ
  * @returns キャッシュファイルのパス
  */
@@ -21,12 +21,12 @@ const getCacheFilePath = (workspaceFolder: vscode.WorkspaceFolder): string => {
 
 /**
  * マークダウンファイルを処理する
- * 
+ *
  * この関数は以下の処理を行います：
  * 1. キャッシュを読み込む
  * 2. マークダウンファイルを処理（QuiverのURLを検出してSVGを生成）
  * 3. キャッシュを保存
- * 
+ *
  * @param document - 処理するドキュメント
  */
 const handleMarkdownSave = async (document: vscode.TextDocument): Promise<void> => {
@@ -79,11 +79,11 @@ const handleMarkdownSave = async (document: vscode.TextDocument): Promise<void> 
 
 /**
  * 拡張機能がアクティベートされたときに呼ばれる
- * 
+ *
  * この関数は以下の処理を行います：
  * 1. ファイル保存イベントのリスナーを登録
  * 2. マークダウンファイルが保存されたときにhandleMarkdownSaveを呼び出す
- * 
+ *
  * 要件: 4.1, 4.2
  */
 export function activate(context: vscode.ExtensionContext) {
