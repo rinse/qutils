@@ -8,12 +8,15 @@ import { DiagramData } from './types';
 
 describe('decodeQuiverData', () => {
   it('有効なQuiverデータをデコードできる', () => {
-    // Quiverのフォーマット: [[nodes], [edges]]
+    // Quiverのフォーマット: [version, nodeCount, [node1], [node2], ..., [edge1], [edge2], ...]
     // nodes: [x, y, label]
     // edges: [source, target, label?, options?]
     const data = [
-      [[0, 0, 'A'], [1, 0, 'B']],
-      [[0, 1, 'f']]
+      0, // version
+      2, // nodeCount
+      [0, 0, 'A'], // node 0
+      [1, 0, 'B'], // node 1
+      [0, 1, 'f']  // edge 0
     ];
     const jsonString = JSON.stringify(data);
     const encodedData = Buffer.from(jsonString, 'utf-8').toString('base64');

@@ -115,16 +115,23 @@ export const decodeQuiverData = (encodedData: string): DiagramData => {
     // JSONパース
     const parsed = JSON.parse(jsonString);
 
-    // Quiverのフォーマット: [[nodes], [edges]]
-    if (!Array.isArray(parsed) || parsed.length !== 2) {
-      throw new Error('Invalid Quiver data format: expected [nodes, edges]');
+    // Quiverのフォーマット: [version, nodeCount, [node1], [node2], ..., [edge1], [edge2], ...]
+    if (!Array.isArray(parsed) || parsed.length < 2) {
+      throw new Error('Invalid Quiver data format: expected array with at least 2 elements');
     }
 
-    const [nodesData, edgesData] = parsed;
+    // 最初の2要素はメタデータ（version, nodeCount）
+    const nodeCount = parsed[1] as number;
 
-    if (!Array.isArray(nodesData) || !Array.isArray(edgesData)) {
-      throw new Error('Invalid Quiver data format: nodes and edges must be arrays');
+    if (typeof nodeCount !== 'number') {
+      throw new Error('Invalid Quiver data format: second element must be node count');
     }
+
+    // ノードデータは index 2 から nodeCount 個
+    const nodesData = parsed.slice(2, 2 + nodeCount);
+
+    // エッジデータは残りの要素
+    const edgesData = parsed.slice(2 + nodeCount);
 
     // ノードをパース
     const nodes = nodesData.map((nodeData, index) => parseNode(nodeData, index));

@@ -158,9 +158,15 @@ export const processMarkdownFile = async (
 
       try {
         // 単一URLを処理
+        // configにURLを設定
+        const urlConfig: SvgGenerationConfig = {
+          ...config,
+          input: quiverUrl.url,
+        };
+
         const result = await processSingleUrl(
           quiverUrl,
-          config,
+          urlConfig,
           slug,
           state.cache,
           imagesDir,
@@ -207,9 +213,9 @@ export const processMarkdownFile = async (
         }
       } catch (error) {
         // エラーが発生した場合は警告を出力してスキップ
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        console.warn(`Failed to process URL at position ${quiverUrl.position.start}: ${errorMessage}`);
-        return state;
+        const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+        console.warn(`Failed to process URL at position ${quiverUrl.position.start}:`, error);
+        throw new Error(`Failed to process URL at position ${quiverUrl.position.start}: ${errorMessage}`);
       }
     },
     Promise.resolve(initialState),

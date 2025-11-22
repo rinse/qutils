@@ -28,10 +28,11 @@ describe('processSingleUrl', () => {
   });
   
   it('should generate SVG for new URL', async () => {
-    // 有効なQuiverのURLとデータ
+    // 有効なQuiverのURLとデータ（新形式）
     const encodedData = Buffer.from(JSON.stringify([
-      [[0, 0, 'A'], [1, 0, 'B']],
-      [[0, 1, 'f']],
+      0, 2, // version, nodeCount
+      [0, 0, 'A'], [1, 0, 'B'], // nodes
+      [0, 1, 'f'], // edges
     ])).toString('base64');
     
     const quiverUrl: QuiverUrl = {
@@ -68,10 +69,11 @@ describe('processSingleUrl', () => {
   });
   
   it('should skip generation for cached URL with existing file', async () => {
-    // 有効なQuiverのURLとデータ
+    // 有効なQuiverのURLとデータ（新形式）
     const encodedData = Buffer.from(JSON.stringify([
-      [[0, 0, 'A'], [1, 0, 'B']],
-      [[0, 1, 'f']],
+      0, 2, // version, nodeCount
+      [0, 0, 'A'], [1, 0, 'B'], // nodes
+      [0, 1, 'f'], // edges
     ])).toString('base64');
     
     const quiverUrl: QuiverUrl = {
@@ -116,16 +118,18 @@ describe('processSingleUrl', () => {
   });
   
   it('should regenerate SVG when URL data changes', async () => {
-    // 元のデータ
+    // 元のデータ（新形式）
     const oldEncodedData = Buffer.from(JSON.stringify([
-      [[0, 0, 'A'], [1, 0, 'B']],
-      [[0, 1, 'f']],
+      0, 2, // version, nodeCount
+      [0, 0, 'A'], [1, 0, 'B'], // nodes
+      [0, 1, 'f'], // edges
     ])).toString('base64');
     
-    // 新しいデータ
+    // 新しいデータ（新形式）
     const newEncodedData = Buffer.from(JSON.stringify([
-      [[0, 0, 'X'], [1, 0, 'Y']],
-      [[0, 1, 'g']],
+      0, 2, // version, nodeCount
+      [0, 0, 'X'], [1, 0, 'Y'], // nodes
+      [0, 1, 'g'], // edges
     ])).toString('base64');
     
     const quiverUrl: QuiverUrl = {
@@ -187,10 +191,11 @@ describe('processMarkdownFile', () => {
   });
   
   it('should process markdown file with Quiver URLs', async () => {
-    // テスト用のマークダウンコンテンツを作成
+    // テスト用のマークダウンコンテンツを作成（新形式）
     const encodedData = Buffer.from(JSON.stringify([
-      [[0, 0, 'A'], [1, 0, 'B']],
-      [[0, 1, 'f']],
+      0, 2, // version, nodeCount
+      [0, 0, 'A'], [1, 0, 'B'], // nodes
+      [0, 1, 'f'], // edges
     ])).toString('base64');
     
     const quiverUrl = `https://q.uiver.app/#q=${encodedData}`;
@@ -261,15 +266,17 @@ Just plain text.`;
   });
   
   it('should process multiple Quiver URLs in markdown file', async () => {
-    // 複数のQuiverのURLを含むマークダウンコンテンツ
+    // 複数のQuiverのURLを含むマークダウンコンテンツ（新形式）
     const encodedData1 = Buffer.from(JSON.stringify([
-      [[0, 0, 'A'], [1, 0, 'B']],
-      [[0, 1, 'f']],
+      0, 2, // version, nodeCount
+      [0, 0, 'A'], [1, 0, 'B'], // nodes
+      [0, 1, 'f'], // edges
     ])).toString('base64');
     
     const encodedData2 = Buffer.from(JSON.stringify([
-      [[0, 0, 'X'], [1, 0, 'Y']],
-      [[0, 1, 'g']],
+      0, 2, // version, nodeCount
+      [0, 0, 'X'], [1, 0, 'Y'], // nodes
+      [0, 1, 'g'], // edges
     ])).toString('base64');
     
     const quiverUrl1 = `https://q.uiver.app/#q=${encodedData1}`;
