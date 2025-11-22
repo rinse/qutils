@@ -1,0 +1,35 @@
+{
+  "name": "qutils",
+  "displayName": "Qutils - Quiver Image Generator",
+  "description": "Automatically generate SVG images from Quiver URLs in Zenn markdown files",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:markdown"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": []
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "vitest --run"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.80.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0",
+    "fast-check": "^3.0.0"
+  },
+  "dependencies": {
+    "puppeteer": "^21.0.0"
+  }
+}

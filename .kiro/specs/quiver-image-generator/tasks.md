@@ -1,6 +1,6 @@
 # 実装計画
 
-- [ ] 1. プロジェクト構造とコア型定義のセットアップ
+- [x] 1. プロジェクト構造とコア型定義のセットアップ
   - TypeScriptプロジェクトの初期化（package.json、tsconfig.json）
   - VSCode拡張機能の基本構造を作成
   - コアデータ型を定義（Url、QuiverUrl、DiagramData、Node、Edge、EdgeStyle、BrowserStrategy、SvgGenerationConfig、エラー型）
