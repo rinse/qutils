@@ -21,12 +21,12 @@ const getBrowser = async (): Promise<Browser> => {
   if (browserInstance && browserInstance.connected) {
     return browserInstance;
   }
-  
+
   browserInstance = await puppeteer.launch({
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
-  
+
   return browserInstance;
 };
 
@@ -56,36 +56,65 @@ export const closeBrowser = async (): Promise<void> => {
  */
 const extractSvgFromPage = async (page: Page): Promise<string> => {
   // ページが完全にロードされるまで待機
-  await page.waitForSelector('canvas', { timeout: 15000 });
-  
+  await page.waitForSelector('.cell', { timeout: 15000 });
+
   // 追加の待機時間を設けて、レンダリングが完了するのを待つ
-  await page.waitForTimeout(3000);
-  
-  // canvas要素を取得してスクリーンショットを撮影
-  const canvas = await page.$('canvas');
-  if (!canvas) {
-    throw new Error('Canvas element not found on Quiver page');
+  await page.waitForTimeout(1000);
+
+  // UI要素を非表示にするCSSを注入
+  await page.addStyleTag({
+    content: `
+      #welcome-pane, .toolbar, .grid { display: none !important; }
+      /* 背景を透明にするためにbodyとhtmlの背景をクリア */
+      body, html { background: transparent !important; }
+    `
+  });
+
+  // 図式のバウンディングボックスを計算
+  const clip = await page.evaluate(() => {
+    const cells = Array.from(document.querySelectorAll('.cell'));
+    if (cells.length === 0) return null;
+
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+
+    cells.forEach((cell: Element) => {
+      const rect = cell.getBoundingClientRect();
+      minX = Math.min(minX, rect.left);
+      minY = Math.min(minY, rect.top);
+      maxX = Math.max(maxX, rect.right);
+      maxY = Math.max(maxY, rect.bottom);
+    });
+
+    const padding = 20; // 余白
+    return {
+      x: minX - padding,
+      y: minY - padding,
+      width: (maxX - minX) + (padding * 2),
+      height: (maxY - minY) + (padding * 2)
+    };
+  });
+
+  if (!clip) {
+    throw new Error('No diagram cells found on Quiver page');
   }
-  
-  // canvas要素のスクリーンショットをBase64で取得
-  const screenshot = await canvas.screenshot({ encoding: 'base64' });
-  
-  // canvas要素のサイズを取得
-  const boundingBox = await canvas.boundingBox();
-  if (!boundingBox) {
-    throw new Error('Cannot get canvas bounding box');
-  }
-  
+
+  // バウンディングボックスに基づいてスクリーンショットを撮影
+  // omitBackground: true で背景を透明にする
+  const screenshot = await page.screenshot({
+    clip: clip,
+    omitBackground: true,
+    encoding: 'base64'
+  });
+
   // PNG画像を埋め込んだSVGを生成
-  // これにより、ベクター形式ではないが、Zennのマークダウンで使用可能なSVGが得られる
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
-     width="${Math.ceil(boundingBox.width)}" height="${Math.ceil(boundingBox.height)}" 
-     viewBox="0 0 ${Math.ceil(boundingBox.width)} ${Math.ceil(boundingBox.height)}">
-  <image width="${Math.ceil(boundingBox.width)}" height="${Math.ceil(boundingBox.height)}" 
+     width="${Math.ceil(clip.width)}" height="${Math.ceil(clip.height)}" 
+     viewBox="0 0 ${Math.ceil(clip.width)} ${Math.ceil(clip.height)}">
+  <image width="${Math.ceil(clip.width)}" height="${Math.ceil(clip.height)}" 
          xlink:href="data:image/png;base64,${screenshot}"/>
 </svg>`;
-  
+
   return svg;
 };
 
@@ -101,11 +130,11 @@ const extractSvgFromPage = async (page: Page): Promise<string> => {
  */
 export const generateSvgFromBrowser = async (url: Url): Promise<string> => {
   let page: Page | null = null;
-  
+
   try {
     const browser = await getBrowser();
     page = await browser.newPage();
-    
+
     // ダウンロード動作を設定
     const client = await page.createCDPSession();
     const downloadPath = process.cwd() + '/temp-downloads';
@@ -113,16 +142,16 @@ export const generateSvgFromBrowser = async (url: Url): Promise<string> => {
       behavior: 'allow',
       downloadPath: downloadPath
     });
-    
+
     // Quiverのページにアクセス
-    await page.goto(url, { 
+    await page.goto(url, {
       waitUntil: 'networkidle0',
-      timeout: 30000 
+      timeout: 30000
     });
-    
+
     // SVGを抽出
     const svg = await extractSvgFromPage(page);
-    
+
     return svg;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

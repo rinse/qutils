@@ -50,7 +50,7 @@
   - `generateSvg`関数を実装（SvgGenerationConfigを受け取り、適切な戦略を呼び出す）
   - _要件: 1.3_
 
-- [ ] 4.7 generateSvgFromBrowserの改善
+- [x] 4.7 generateSvgFromBrowserの改善
   - Welcomeメッセージを完全に非表示にする
   - UIコントロール（Save、Undo、ツールバーなど）を非表示にする
   - グリッドを非表示にする
