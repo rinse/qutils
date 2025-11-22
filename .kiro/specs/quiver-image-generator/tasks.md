@@ -6,8 +6,8 @@
   - コアデータ型を定義（Url、QuiverUrl、DiagramData、Node、Edge、EdgeStyle、BrowserStrategy、SvgGenerationConfig、エラー型）
   - _要件: 7.1, 7.2_
 
-- [ ] 2. URL解析機能の実装
-- [ ] 2.1 URL解析関数の実装
+- [-] 2. URL解析機能の実装
+- [x] 2.1 URL解析関数の実装
   - `parseQuiverUrl`関数を実装（URLからBase64データを抽出）
   - `extractQuiverUrls`関数を実装（マークダウンからすべてのQuiverのURLを検出）
   - `isUrlReplaced`関数を実装（URLが既に画像参照に置き換えられているか確認）
