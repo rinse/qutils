@@ -41,24 +41,24 @@ const parseEdgeStyle = (options: unknown): EdgeStyle | undefined => {
   }
 
   const opts = options as Record<string, unknown>;
-  const style: EdgeStyle = {};
+  let style: EdgeStyle = {};
 
   if ('body' in opts && typeof opts.body === 'object' && opts.body !== null) {
     const body = opts.body as Record<string, unknown>;
     if ('name' in body && typeof body.name === 'string') {
-      return { ...style, bodyName: body.name };
+      style = { ...style, bodyName: body.name };
     }
   }
 
   if ('head' in opts && typeof opts.head === 'object' && opts.head !== null) {
     const head = opts.head as Record<string, unknown>;
     if ('name' in head && typeof head.name === 'string') {
-      return { ...style, headName: head.name };
+      style = { ...style, headName: head.name };
     }
   }
 
   if ('offset' in opts && typeof opts.offset === 'number') {
-    return { ...style, offset: opts.offset };
+    style = { ...style, offset: opts.offset };
   }
 
   return Object.keys(style).length > 0 ? style : undefined;
@@ -79,25 +79,29 @@ const parseEdge = (edgeData: unknown, index: number): Edge => {
     throw new Error(`Edge at index ${index} has invalid source or target`);
   }
 
-  const edge: Edge = {
-    id: index,
-    source,
-    target,
-  };
-
-  if (label !== undefined && label !== '') {
+  // labelの処理
+  const parsedLabel = (() => {
+    if (label === undefined) {
+      return undefined;
+    }
     if (typeof label !== 'string') {
       throw new Error(`Edge at index ${index} has invalid label`);
     }
-    return { ...edge, label };
-  }
+    // 空文字列の場合はundefinedとして扱う（Quiverのフォーマットでは空文字列はプレースホルダー）
+    return label !== '' ? label : undefined;
+  })();
 
-  const style = parseEdgeStyle(options);
-  if (style !== undefined) {
-    return { ...edge, style };
-  }
+  // styleの処理
+  const parsedStyle = parseEdgeStyle(options);
 
-  return edge;
+  // イミュータブルなオブジェクトを構築
+  return {
+    id: index,
+    source,
+    target,
+    ...(parsedLabel !== undefined && { label: parsedLabel }),
+    ...(parsedStyle !== undefined && { style: parsedStyle }),
+  };
 };
 
 /**
@@ -152,6 +156,70 @@ export const decodeQuiverData = (encodedData: string): DiagramData => {
     };
     throw decodeError;
   }
+};
+
+/**
+ * DiagramDataをQuiverのフォーマットにエンコードしてBase64文字列に変換
+ *
+ * @param data - エンコードする図式データ
+ * @returns Base64エンコードされた図式データ
+ */
+export const encodeQuiverData = (data: DiagramData): string => {
+  // Quiverのフォーマット: [version, nodeCount, [node1], [node2], ..., [edge1], [edge2], ...]
+  const version = 0;
+  const nodeCount = data.nodes.length;
+
+  // ノードを配列形式に変換: [x, y, label]
+  const nodesArray = data.nodes.map(node => [node.x, node.y, node.label]);
+
+  // エッジを配列形式に変換: [source, target, label?, options?]
+  const edgesArray = data.edges.map(edge => {
+    const edgeArray: unknown[] = [edge.source, edge.target];
+
+    // styleのオプションを構築
+    let options: Record<string, unknown> | undefined = undefined;
+    if (edge.style !== undefined) {
+      const opts: Record<string, unknown> = {};
+
+      if (edge.style.bodyName !== undefined) {
+        opts.body = { name: edge.style.bodyName };
+      }
+
+      if (edge.style.headName !== undefined) {
+        opts.head = { name: edge.style.headName };
+      }
+
+      if (edge.style.offset !== undefined) {
+        opts.offset = edge.style.offset;
+      }
+
+      // optionsが空でない場合のみ設定
+      if (Object.keys(opts).length > 0) {
+        options = opts;
+      }
+    }
+
+    // labelがある場合（空文字列でない場合）は追加
+    if (edge.label !== undefined && edge.label !== '') {
+      edgeArray.push(edge.label);
+      if (options !== undefined) {
+        edgeArray.push(options);
+      }
+    } else if (options !== undefined) {
+      // labelがないがoptionsがある場合は空文字列をプレースホルダーとして追加
+      edgeArray.push('');
+      edgeArray.push(options);
+    }
+
+    return edgeArray;
+  });
+
+  // 全体を配列にまとめる
+  const quiverData = [version, nodeCount, ...nodesArray, ...edgesArray];
+
+  // JSONに変換してBase64エンコード
+  const jsonString = JSON.stringify(quiverData);
+  return Buffer.from(jsonString, 'utf-8').toString('base64');
 };
 
 /**
