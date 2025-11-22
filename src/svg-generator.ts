@@ -24,7 +24,7 @@ const getBrowser = async (): Promise<Browser> => {
 
   browserInstance = await puppeteer.launch({
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
   });
 
   return browserInstance;
@@ -67,7 +67,7 @@ const extractSvgFromPage = async (page: Page): Promise<string> => {
       #welcome-pane, .toolbar, .grid { display: none !important; }
       /* 背景を透明にするためにbodyとhtmlの背景をクリア */
       body, html { background: transparent !important; }
-    `
+    `,
   });
 
   // 図式のバウンディングボックスを計算
@@ -90,7 +90,7 @@ const extractSvgFromPage = async (page: Page): Promise<string> => {
       x: minX - padding,
       y: minY - padding,
       width: (maxX - minX) + (padding * 2),
-      height: (maxY - minY) + (padding * 2)
+      height: (maxY - minY) + (padding * 2),
     };
   });
 
@@ -103,7 +103,7 @@ const extractSvgFromPage = async (page: Page): Promise<string> => {
   const screenshot = await page.screenshot({
     clip: clip,
     omitBackground: true,
-    encoding: 'base64'
+    encoding: 'base64',
   });
 
   // PNG画像を埋め込んだSVGを生成
@@ -140,13 +140,13 @@ export const generateSvgFromBrowser = async (url: Url): Promise<string> => {
     const downloadPath = process.cwd() + '/temp-downloads';
     await client.send('Page.setDownloadBehavior', {
       behavior: 'allow',
-      downloadPath: downloadPath
+      downloadPath: downloadPath,
     });
 
     // Quiverのページにアクセス
     await page.goto(url, {
       waitUntil: 'networkidle0',
-      timeout: 30000
+      timeout: 30000,
     });
 
     // SVGを抽出
@@ -158,7 +158,7 @@ export const generateSvgFromBrowser = async (url: Url): Promise<string> => {
     throw {
       type: 'svg-generation-error',
       config: { strategy: 'browser', input: url },
-      message: `Failed to generate SVG from browser: ${message}`
+      message: `Failed to generate SVG from browser: ${message}`,
     } as SvgGenerationError;
   } finally {
     // ページをクローズ（ブラウザは再利用のため開いたまま）

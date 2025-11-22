@@ -1,0 +1,18 @@
+{
+  "enabled": true,
+  "name": "Run npm lint",
+  "description": "Automatically runs npm run lint command to check code quality and style.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "./src/**/*.ts"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Run lint with `npm run lint:fix`. If it requires a manual edit, you have to handle it. You MUST follow the instruction and keep no warnings or errors."
+  },
+  "workspaceFolderName": "qutils",
+  "shortName": "run-npm-lint"
+}

@@ -27,7 +27,7 @@ export const saveSvgToFile = async (svg: string, filePath: string): Promise<void
     const fileIoError: FileIoError = {
       type: 'file-io-error',
       path: filePath,
-      message: `Failed to save SVG file: ${error instanceof Error ? error.message : String(error)}`
+      message: `Failed to save SVG file: ${error instanceof Error ? error.message : String(error)}`,
     };
     throw fileIoError;
   }
@@ -49,8 +49,8 @@ const generateUniqueId = (data: DiagramData): string => {
       source: e.source, 
       target: e.target, 
       label: e.label,
-      style: e.style 
-    }))
+      style: e.style, 
+    })),
   });
   
   // SHA-256ハッシュを計算し、最初の8文字を使用
@@ -108,7 +108,7 @@ export const extractSlug = (markdownPath: string, content: string): string => {
 export const replaceUrlWithImageRef = (
   content: string,
   url: QuiverUrl,
-  imagePath: string
+  imagePath: string,
 ): string => {
   // 画像参照の形式: ![diagram](./images/filename.svg)
   const imageRef = `![diagram](${imagePath})`;
