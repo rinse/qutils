@@ -11,11 +11,7 @@ import { Url, QuiverUrl, UrlParseError } from './types';
  */
 const QUIVER_URL_PATTERN = /https:\/\/q\.uiver\.app\/#q=([A-Za-z0-9_-]+={0,2})/g;
 
-/**
- * 画像参照パターン
- * ![...](...)の形式
- */
-const IMAGE_REF_PATTERN = /!\[.*?\]\(.*?\)/;
+
 
 /**
  * 生のURL文字列からQuiverUrlを構築
@@ -28,7 +24,7 @@ const IMAGE_REF_PATTERN = /!\[.*?\]\(.*?\)/;
  */
 export const parseQuiverUrl = (
   url: Url,
-  position: { readonly start: number; readonly end: number }
+  position: { readonly start: number; readonly end: number },
 ): QuiverUrl => {
   // URLがQuiverのURLパターンに一致するか確認
   const match = url.match(/https:\/\/q\.uiver\.app\/#q=([A-Za-z0-9_-]+={0,2})/);
@@ -37,7 +33,7 @@ export const parseQuiverUrl = (
     const error: UrlParseError = {
       type: 'url-parse-error',
       url,
-      message: `Invalid Quiver URL format: ${url}`
+      message: `Invalid Quiver URL format: ${url}`,
     };
     throw error;
   }
@@ -47,7 +43,7 @@ export const parseQuiverUrl = (
   return {
     url,
     encodedData,
-    position
+    position,
   };
 };
 
@@ -67,7 +63,6 @@ export const extractQuiverUrls = (content: string): ReadonlyArray<QuiverUrl> => 
   
   while ((match = regex.exec(content)) !== null) {
     const url = match[0];
-    const encodedData = match[1];
     const start = match.index;
     const end = start + url.length;
     

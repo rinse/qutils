@@ -8,7 +8,7 @@ import * as vscode from 'vscode';
 /**
  * 拡張機能がアクティベートされたときに呼ばれる
  */
-export function activate(context: vscode.ExtensionContext) {
+export function activate(_context: vscode.ExtensionContext) {
   console.log('Qutils: Quiver Image Generator is now active');
 
   // TODO: ファイル保存イベントのリスナーを追加
