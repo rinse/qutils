@@ -3,6 +3,20 @@
   "displayName": "Qutils - Quiver Image Generator",
   "description": "Automatically generate SVG images from Quiver URLs in Zenn markdown files",
   "version": "0.1.0",
+  "publisher": "qutils",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/qutils"
+  },
+  "keywords": [
+    "quiver",
+    "commutative diagram",
+    "svg",
+    "zenn",
+    "markdown",
+    "diagram generator"
+  ],
   "engines": {
     "vscode": "^1.80.0"
   },
