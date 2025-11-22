@@ -1,0 +1,15 @@
+{
+  "enabled": true,
+  "name": "Commit on Task Complete",
+  "description": "Commit changes as a task is completed",
+  "version": "1",
+  "when": {
+    "type": "userTriggered"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "1. You check lints and tests passes.\n2.  You check status with `git status`. Finish the hook session if there are no changes.\n2. You check diffs with `git --no-pager diff <PATHSPEC...>`, don't forget the `--no-pager` option.\n    - Also, you can run `git --no-pager log ...` to look up the git log. Don't forget the `--no-pager` option here as well.\n3. Add and commit changes. Add changes with `git add .` or `git add {specific-path}`. Never use the `-A` option.\n4. A commit message includes the task number which is resolved in the changes.\n    - You will only commit changes that you make in the task, which means you can't commit changes that lies before you start task. In that case, you don't want to use `git add .`.'\n    - Your commit messages are always written in English."
+  },
+  "workspaceFolderName": "qutils",
+  "shortName": "commit-on-task-complete"
+}

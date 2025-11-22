@@ -6,7 +6,9 @@
   "when": {
     "type": "fileEdited",
     "patterns": [
-      "./src/**/*.ts"
+      "src",
+      "src/*",
+      "src/**/*.ts"
     ]
   },
   "then": {
