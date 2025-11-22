@@ -169,3 +169,148 @@ describe('processSingleUrl', () => {
     expect(result.imagePath).toMatch(/.*\.svg$/);
   });
 });
+
+
+describe('processMarkdownFile', () => {
+  const testDir = path.join(process.cwd(), 'test-output-markdown');
+  const markdownPath = path.join(testDir, 'test-article.md');
+  const imagesDir = path.join(testDir, 'images');
+  
+  beforeEach(async () => {
+    // テスト用ディレクトリを作成
+    await fs.mkdir(testDir, { recursive: true });
+  });
+  
+  afterEach(async () => {
+    // テスト用ディレクトリをクリーンアップ
+    await fs.rm(testDir, { recursive: true, force: true });
+  });
+  
+  it('should process markdown file with Quiver URLs', async () => {
+    // テスト用のマークダウンコンテンツを作成
+    const encodedData = Buffer.from(JSON.stringify([
+      [[0, 0, 'A'], [1, 0, 'B']],
+      [[0, 1, 'f']],
+    ])).toString('base64');
+    
+    const quiverUrl = `https://q.uiver.app/#q=${encodedData}`;
+    const markdownContent = `# Test Article
+
+This is a test article with a Quiver diagram:
+
+${quiverUrl}
+
+End of article.`;
+    
+    // マークダウンファイルを作成
+    await fs.writeFile(markdownPath, markdownContent, 'utf-8');
+    
+    const config = {
+      strategy: 'browser' as const,
+      input: quiverUrl,
+    };
+    
+    const cache: ReadonlyArray<CacheEntry> = [];
+    
+    // processMarkdownFileをインポート
+    const { processMarkdownFile } = await import('./process-url');
+    
+    const result = await processMarkdownFile(markdownPath, config, cache);
+    
+    // 結果の検証
+    expect(result.generatedImages.length).toBe(1);
+    expect(result.generatedImages[0]).toMatch(/.*\.svg$/);
+    expect(result.updatedCache.length).toBe(1);
+    
+    // コンテンツが更新されたか確認
+    expect(result.updatedContent).toContain('![diagram]');
+    expect(result.updatedContent).not.toContain(quiverUrl);
+    
+    // ファイルが更新されたか確認
+    const updatedContent = await fs.readFile(markdownPath, 'utf-8');
+    expect(updatedContent).toContain('![diagram]');
+    expect(updatedContent).not.toContain(quiverUrl);
+  });
+  
+  it('should handle markdown file with no Quiver URLs', async () => {
+    // QuiverのURLを含まないマークダウンコンテンツ
+    const markdownContent = `# Test Article
+
+This is a test article without any Quiver diagrams.
+
+Just plain text.`;
+    
+    // マークダウンファイルを作成
+    await fs.writeFile(markdownPath, markdownContent, 'utf-8');
+    
+    const config = {
+      strategy: 'browser' as const,
+      input: 'https://q.uiver.app/#q=test',
+    };
+    
+    const cache: ReadonlyArray<CacheEntry> = [];
+    
+    const { processMarkdownFile } = await import('./process-url');
+    
+    const result = await processMarkdownFile(markdownPath, config, cache);
+    
+    // 結果の検証
+    expect(result.generatedImages.length).toBe(0);
+    expect(result.updatedCache.length).toBe(0);
+    expect(result.updatedContent).toBe(markdownContent);
+  });
+  
+  it('should process multiple Quiver URLs in markdown file', async () => {
+    // 複数のQuiverのURLを含むマークダウンコンテンツ
+    const encodedData1 = Buffer.from(JSON.stringify([
+      [[0, 0, 'A'], [1, 0, 'B']],
+      [[0, 1, 'f']],
+    ])).toString('base64');
+    
+    const encodedData2 = Buffer.from(JSON.stringify([
+      [[0, 0, 'X'], [1, 0, 'Y']],
+      [[0, 1, 'g']],
+    ])).toString('base64');
+    
+    const quiverUrl1 = `https://q.uiver.app/#q=${encodedData1}`;
+    const quiverUrl2 = `https://q.uiver.app/#q=${encodedData2}`;
+    
+    const markdownContent = `# Test Article
+
+First diagram:
+
+${quiverUrl1}
+
+Second diagram:
+
+${quiverUrl2}
+
+End of article.`;
+    
+    // マークダウンファイルを作成
+    await fs.writeFile(markdownPath, markdownContent, 'utf-8');
+    
+    const config = {
+      strategy: 'browser' as const,
+      input: quiverUrl1,
+    };
+    
+    const cache: ReadonlyArray<CacheEntry> = [];
+    
+    const { processMarkdownFile } = await import('./process-url');
+    
+    const result = await processMarkdownFile(markdownPath, config, cache);
+    
+    // 結果の検証
+    expect(result.generatedImages.length).toBe(2);
+    expect(result.updatedCache.length).toBe(2);
+    
+    // 両方のURLが置換されたか確認
+    expect(result.updatedContent).not.toContain(quiverUrl1);
+    expect(result.updatedContent).not.toContain(quiverUrl2);
+    
+    // 画像参照が2つ含まれているか確認
+    const imageRefCount = (result.updatedContent.match(/!\[diagram\]/g) || []).length;
+    expect(imageRefCount).toBe(2);
+  });
+});
