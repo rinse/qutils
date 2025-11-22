@@ -83,6 +83,8 @@
   - `generateImageFileName`関数を実装（一意なファイル名を生成）
   - `extractSlug`関数を実装（マークダウンファイルからslugを抽出）
   - `replaceUrlWithImageRef`関数を実装（マークダウン内のURLを画像参照に置き換え）
+    * 画像をクリックするとQuiverのページに飛ぶようにリンクを追加
+    * 形式: `[![diagram](imagePath)](quiverUrl)`
   - `fileExists`関数を実装（ファイルの存在確認）
   - _要件: 1.4, 1.5, 2.1, 2.2_
 

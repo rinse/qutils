@@ -99,6 +99,7 @@ export const extractSlug = (markdownPath: string, content: string): string => {
 
 /**
  * マークダウンコンテンツ内のURLを画像参照に置き換え
+ * 画像をクリックするとQuiverのページに飛ぶようにリンクを追加
  *
  * @param content - 元のマークダウンコンテンツ
  * @param url - 置き換え対象のQuiverUrl
@@ -110,8 +111,9 @@ export const replaceUrlWithImageRef = (
   url: QuiverUrl,
   imagePath: string,
 ): string => {
-  // 画像参照の形式: ![diagram](./images/filename.svg)
-  const imageRef = `![diagram](${imagePath})`;
+  // 画像参照の形式: [![alt](path)](url)
+  // 画像をクリックするとQuiverのページに飛ぶ
+  const imageRef = `[![diagram](${imagePath})](${url.url})`;
 
   // URLを画像参照に置き換え
   // position情報を使用して正確に置換

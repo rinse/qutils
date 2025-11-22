@@ -227,14 +227,14 @@ End of article.`;
     expect(result.generatedImages[0]).toMatch(/.*\.svg$/);
     expect(result.updatedCache.length).toBe(1);
     
-    // コンテンツが更新されたか確認
-    expect(result.updatedContent).toContain('![diagram]');
-    expect(result.updatedContent).not.toContain(quiverUrl);
+    // コンテンツが更新されたか確認（リンク付き画像になっている）
+    expect(result.updatedContent).toContain('[![diagram]');
+    expect(result.updatedContent).toContain(`](${quiverUrl})`);
     
     // ファイルが更新されたか確認
     const updatedContent = await fs.readFile(markdownPath, 'utf-8');
-    expect(updatedContent).toContain('![diagram]');
-    expect(updatedContent).not.toContain(quiverUrl);
+    expect(updatedContent).toContain('[![diagram]');
+    expect(updatedContent).toContain(`](${quiverUrl})`);
   });
   
   it('should handle markdown file with no Quiver URLs', async () => {
@@ -312,9 +312,9 @@ End of article.`;
     expect(result.generatedImages.length).toBe(2);
     expect(result.updatedCache.length).toBe(2);
     
-    // 両方のURLが置換されたか確認
-    expect(result.updatedContent).not.toContain(quiverUrl1);
-    expect(result.updatedContent).not.toContain(quiverUrl2);
+    // 両方のURLがリンク付き画像に置換されたか確認
+    expect(result.updatedContent).toContain(`](${quiverUrl1})`);
+    expect(result.updatedContent).toContain(`](${quiverUrl2})`);
     
     // 画像参照が2つ含まれているか確認
     const imageRefCount = (result.updatedContent.match(/!\[diagram\]/g) || []).length;

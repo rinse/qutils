@@ -166,7 +166,7 @@ slug: "quoted-slug"
   });
 
   describe('replaceUrlWithImageRef', () => {
-    it('should replace URL with image reference', () => {
+    it('should replace URL with linked image reference', () => {
       const content = 'Check this diagram: https://q.uiver.app/#q=abc123 for details.';
       const url: QuiverUrl = {
         url: 'https://q.uiver.app/#q=abc123',
@@ -177,8 +177,8 @@ slug: "quoted-slug"
 
       const result = replaceUrlWithImageRef(content, url, imagePath);
 
-      // URLのみが置換され、その後のスペースは保持される
-      expect(result).toBe('Check this diagram: ![diagram](./images/diagram.svg) for details.');
+      // URLが画像リンクに置換され、クリックするとQuiverのページに飛ぶ
+      expect(result).toBe('Check this diagram: [![diagram](./images/diagram.svg)](https://q.uiver.app/#q=abc123) for details.');
     });
 
     it('should handle URL at the beginning of content', () => {
@@ -192,7 +192,7 @@ slug: "quoted-slug"
 
       const result = replaceUrlWithImageRef(content, url, imagePath);
 
-      expect(result).toBe('![diagram](./images/test.svg) is the diagram.');
+      expect(result).toBe('[![diagram](./images/test.svg)](https://q.uiver.app/#q=xyz789) is the diagram.');
     });
 
     it('should handle URL at the end of content', () => {
@@ -206,7 +206,7 @@ slug: "quoted-slug"
 
       const result = replaceUrlWithImageRef(content, url, imagePath);
 
-      expect(result).toBe('See: ![diagram](./images/final.svg)');
+      expect(result).toBe('See: [![diagram](./images/final.svg)](https://q.uiver.app/#q=end123)');
     });
   });
 
