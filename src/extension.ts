@@ -8,6 +8,7 @@ import * as path from 'path';
 import { processMarkdownFile } from './process-url';
 import { loadCache, saveCache } from './cache';
 import type { CacheEntry, SvgGenerationConfig } from './types';
+import { showErrorNotification, showSuccessNotification } from './error-notification';
 
 /**
  * キャッシュファイルのパスを取得
@@ -65,15 +66,14 @@ const handleMarkdownSave = async (document: vscode.TextDocument): Promise<void> 
 
     // 生成された画像がある場合は通知
     if (result.generatedImages.length > 0) {
-      vscode.window.showInformationMessage(
-        `Qutils: Generated ${result.generatedImages.length} image(s) from Quiver URLs`,
+      showSuccessNotification(
+        `${result.generatedImages.length}個の画像をQuiverのURLから生成しました`,
       );
     }
   } catch (error) {
-    // エラーが発生した場合は通知
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    vscode.window.showErrorMessage(`Qutils: Failed to process markdown file: ${errorMessage}`);
-    console.error('Qutils: Error processing markdown file:', error);
+    // エラーが発生した場合は詳細な通知を表示
+    // 要件: 4.4
+    showErrorNotification(error);
   }
 };
 
