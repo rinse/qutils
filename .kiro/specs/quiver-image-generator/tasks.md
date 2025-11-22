@@ -50,6 +50,17 @@
   - `generateSvg`関数を実装（SvgGenerationConfigを受け取り、適切な戦略を呼び出す）
   - _要件: 1.3_
 
+- [ ] 4.7 generateSvgFromBrowserの改善
+  - Welcomeメッセージを完全に非表示にする
+  - UIコントロール（Save、Undo、ツールバーなど）を非表示にする
+  - グリッドを非表示にする
+  - 純粋なSVGまたは最適化されたPNG画像を取得する
+  - ファイルサイズを削減する（現在の実装は約104KBで大きすぎる）
+  - _要件: 1.3, 6.1, 6.3, 6.4_
+  - _注: 現在の実装はPNG埋め込みSVGで、Welcome/UI/グリッドが表示されている_
+  - ChatGPTの調査記録（参考）
+    * https://chatgpt.com/s/dr_6921d496be5c8191865a07bb381565de
+
 - [ ]* 4.3 SVG生成の成功プロパティテスト
   - **Property 4: SVG生成の成功**
   - **検証対象: 要件 1.3**
