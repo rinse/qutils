@@ -16,7 +16,7 @@ import { CacheEntry, Url } from './types';
  */
 export const getCacheEntry = (
   url: Url,
-  cache: ReadonlyArray<CacheEntry>
+  cache: ReadonlyArray<CacheEntry>,
 ): CacheEntry | undefined => {
   return cache.find(entry => entry.url === url);
 };
@@ -32,7 +32,7 @@ export const getCacheEntry = (
  */
 export const addCacheEntry = (
   cache: ReadonlyArray<CacheEntry>,
-  entry: CacheEntry
+  entry: CacheEntry,
 ): ReadonlyArray<CacheEntry> => {
   // 既存のエントリを除外して新しいエントリを追加
   const filteredCache = cache.filter(e => e.url !== entry.url);
@@ -52,7 +52,7 @@ export const addCacheEntry = (
 export const hasUrlChanged = (
   url: Url,
   encodedData: string,
-  cache: ReadonlyArray<CacheEntry>
+  cache: ReadonlyArray<CacheEntry>,
 ): boolean => {
   const entry = getCacheEntry(url, cache);
   
@@ -72,7 +72,7 @@ export const hasUrlChanged = (
  * @returns 読み込まれたキャッシュエントリの配列
  */
 export const loadCache = async (
-  cacheFilePath: string
+  cacheFilePath: string,
 ): Promise<ReadonlyArray<CacheEntry>> => {
   try {
     const content = await fs.readFile(cacheFilePath, 'utf-8');
@@ -84,7 +84,7 @@ export const loadCache = async (
     }
     
     return parsed as ReadonlyArray<CacheEntry>;
-  } catch (error) {
+  } catch {
     // ファイルが存在しない場合や読み込みエラーの場合は空の配列を返す
     return [];
   }
@@ -98,7 +98,7 @@ export const loadCache = async (
  */
 export const saveCache = async (
   cacheFilePath: string,
-  cache: ReadonlyArray<CacheEntry>
+  cache: ReadonlyArray<CacheEntry>,
 ): Promise<void> => {
   // ディレクトリが存在しない場合は作成
   const dir = path.dirname(cacheFilePath);
