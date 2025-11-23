@@ -262,6 +262,102 @@ describe('Property-Based Tests', () => {
   });
 
   /**
+   * **Feature: quiver-image-generator, Property 6: URL置換の正確性**
+   * **Validates: Requirements 1.5**
+   * 
+   * 任意のマークダウンコンテンツとQuiverのURLに対して、置換後の
+   * コンテンツには元のURLが含まれず、画像参照が含まれるべきである
+   */
+  it('Property 6: URL置換の正確性 - 置換後にURLが画像参照になる', () => {
+    // マークダウンコンテンツのジェネレーター
+    // QuiverのURLを含む様々なコンテンツを生成
+    const markdownContentArbitrary = fc.record({
+      before: fc.string({ maxLength: 200 }),
+      url: fc.record({
+        encodedData: fc.stringMatching(/^[A-Za-z0-9_-]{10,50}$/),
+      }),
+      after: fc.string({ maxLength: 200 }),
+    }).map(({ before, url, after }) => {
+      const quiverUrl = `https://q.uiver.app/#q=${url.encodedData}`;
+      const content = before + quiverUrl + after;
+      const start = before.length;
+      const end = start + quiverUrl.length;
+      
+      return {
+        content,
+        quiverUrl: {
+          url: quiverUrl,
+          encodedData: url.encodedData,
+          position: { start, end }
+        } as QuiverUrl
+      };
+    });
+    
+    // 画像パスのジェネレーター
+    const imagePathArbitrary = fc.oneof(
+      // 相対パス
+      fc.stringMatching(/^[a-zA-Z0-9_-]{1,20}$/).map(name => `./${name}.svg`),
+      fc.tuple(
+        fc.stringMatching(/^[a-zA-Z0-9_-]{1,20}$/),
+        fc.stringMatching(/^[a-zA-Z0-9_-]{1,20}$/)
+      ).map(([dir, name]) => `./${dir}/${name}.svg`),
+      
+      // 絶対パス風
+      fc.tuple(
+        fc.stringMatching(/^[a-zA-Z0-9_-]{1,20}$/),
+        fc.stringMatching(/^[a-zA-Z0-9_-]{1,20}$/)
+      ).map(([dir, name]) => `/images/${dir}/${name}.svg`)
+    );
+    
+    fc.assert(
+      fc.property(
+        markdownContentArbitrary,
+        imagePathArbitrary,
+        ({ content, quiverUrl }, imagePath) => {
+          // URL置換を実行
+          const result = replaceUrlWithImageRef(content, quiverUrl, imagePath);
+          
+          // プロパティ1: 元のURLが含まれていないこと
+          // ただし、画像リンクの一部として含まれる場合は除く
+          // 画像リンク形式: [![diagram](path)](url)
+          // URLは最後の括弧内にのみ存在するべき
+          const urlOccurrences = (result.match(new RegExp(quiverUrl.url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
+          expect(urlOccurrences).toBe(1); // 画像リンクの一部として1回だけ
+          
+          // プロパティ2: 画像参照が含まれていること
+          // 形式: [![diagram](imagePath)](url)
+          // 期待される画像参照を直接構築して文字列比較する方が確実
+          const expectedImageRef = `[![diagram](${imagePath})](${quiverUrl.url})`;
+          expect(result).toContain(expectedImageRef);
+          
+          // プロパティ3: 画像参照が正しい位置にあること
+          // 元のURLの位置に画像参照が挿入されているべき
+          const expectedResult = 
+            content.substring(0, quiverUrl.position.start) +
+            expectedImageRef +
+            content.substring(quiverUrl.position.end);
+          expect(result).toBe(expectedResult);
+          
+          // プロパティ4: コンテンツの長さが適切に変化していること
+          // 元のURL長 - 画像参照長 = 長さの差
+          const lengthDiff = result.length - content.length;
+          const expectedLengthDiff = expectedImageRef.length - quiverUrl.url.length;
+          expect(lengthDiff).toBe(expectedLengthDiff);
+          
+          // プロパティ5: URL以外の部分は変更されていないこと
+          const beforePart = result.substring(0, quiverUrl.position.start);
+          const afterStartPos = quiverUrl.position.start + expectedImageRef.length;
+          const afterPart = result.substring(afterStartPos);
+          
+          expect(beforePart).toBe(content.substring(0, quiverUrl.position.start));
+          expect(afterPart).toBe(content.substring(quiverUrl.position.end));
+        }
+      ),
+      { numRuns: 100 } // 最低100回の反復を実行
+    );
+  });
+
+  /**
    * **Feature: quiver-image-generator, Property 5: ファイル保存の成功**
    * **Validates: Requirements 1.4**
    * 
