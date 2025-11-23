@@ -234,6 +234,117 @@ describe('Property-Based Tests', () => {
   });
 
   /**
+   * **Feature: quiver-image-generator, Property 11: 不正URLのスキップ**
+   * **Validates: Requirements 3.4**
+   * 
+   * 任意の不正な形式のURLを含むマークダウンに対して、処理は失敗せず、
+   * 不正なURLはスキップされるべきである
+   */
+  it('Property 11: 不正URLのスキップ - 不正なURLを含んでも処理が失敗しない', () => {
+    // 有効なBase64文字列のジェネレーター
+    const validBase64Arbitrary = fc.stringMatching(/^[A-Za-z0-9_-]{1,100}={0,2}$/);
+    
+    // 有効なQuiverのURLジェネレーター
+    const validQuiverUrlArbitrary = validBase64Arbitrary.map(
+      (encodedData) => `https://q.uiver.app/#q=${encodedData}`
+    );
+    
+    // 不正なURLのジェネレーター
+    // 様々な不正なパターンを生成
+    const invalidUrlArbitrary = fc.oneof(
+      // 1. Quiverのドメインでないが似た形式のURL
+      fc.string().map((s) => `https://example.com/#q=${s}`),
+      fc.string().map((s) => `https://other-site.com/#q=${s}`),
+      
+      // 2. Quiverのドメインだがフラグメントがない
+      fc.constant('https://q.uiver.app/'),
+      fc.constant('https://q.uiver.app'),
+      
+      // 3. Quiverのドメインだが#qがない
+      fc.string().map((s) => `https://q.uiver.app/#${s}`).filter((url) => !url.includes('#q=')),
+      
+      // 4. プロトコルが不正
+      fc.string().map((s) => `http://q.uiver.app/#q=${s}`),
+      fc.string().map((s) => `ftp://q.uiver.app/#q=${s}`),
+      
+      // 5. 完全に不正なURL
+      fc.string().filter((s) => !s.includes('q.uiver.app')),
+      
+      // 6. URLの形式だが不完全
+      fc.constant('https://'),
+      fc.constant('q.uiver.app/#q='),
+      fc.constant('://q.uiver.app/#q=test')
+    );
+    
+    // マークダウンのテキスト断片ジェネレーター
+    const markdownFragmentArbitrary = fc.string().filter(
+      (s) => !s.includes('https://q.uiver.app/#q=')
+    ).map((s) => {
+      // フラグメントがBase64文字で終わる場合、空白を追加してURLと区切る
+      if (s.length > 0 && /[A-Za-z0-9_=-]$/.test(s)) {
+        return s + ' ';
+      }
+      return s;
+    });
+    
+    // テスト: 有効なURLと不正なURLを混在させたマークダウンを処理
+    fc.assert(
+      fc.property(
+        fc.array(validQuiverUrlArbitrary, { minLength: 0, maxLength: 5 }),
+        fc.array(invalidUrlArbitrary, { minLength: 1, maxLength: 5 }),
+        fc.array(markdownFragmentArbitrary, { minLength: 1, maxLength: 11 }),
+        (validUrls, invalidUrls, fragments) => {
+          // 有効なURLと不正なURLを混在させる
+          const allUrls = [...validUrls, ...invalidUrls];
+          
+          // シャッフルしてランダムな順序にする
+          for (let i = allUrls.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [allUrls[i], allUrls[j]] = [allUrls[j], allUrls[i]];
+          }
+          
+          // URLとフラグメントを交互に配置してマークダウンを構築
+          let content = '';
+          
+          for (let i = 0; i < allUrls.length; i++) {
+            content += fragments[i] || '';
+            content += allUrls[i];
+            content += ' ';
+          }
+          if (fragments.length > allUrls.length) {
+            content += fragments[fragments.length - 1];
+          }
+          
+          // URLを抽出（不正なURLがあっても例外をスローしないことを確認）
+          let result: ReturnType<typeof extractQuiverUrls>;
+          expect(() => {
+            result = extractQuiverUrls(content);
+          }).not.toThrow();
+          
+          // 有効なURLのみが検出されることを確認
+          result = extractQuiverUrls(content);
+          
+          // 検出されたURLの数は有効なURLの数以下であるべき
+          expect(result.length).toBeLessThanOrEqual(validUrls.length);
+          
+          // 検出されたすべてのURLは有効なQuiverのURL形式であるべき
+          result.forEach((quiverUrl) => {
+            expect(quiverUrl.url).toMatch(/^https:\/\/q\.uiver\.app\/#q=.+$/);
+            expect(validUrls).toContain(quiverUrl.url);
+          });
+          
+          // 不正なURLは検出されないことを確認
+          const detectedUrls = result.map((qu) => qu.url);
+          invalidUrls.forEach((invalidUrl) => {
+            expect(detectedUrls).not.toContain(invalidUrl);
+          });
+        }
+      ),
+      { numRuns: 100 } // 最低100回の反復を実行
+    );
+  });
+
+  /**
    * **Feature: quiver-image-generator, Property 1: URL検出の完全性**
    * **Validates: Requirements 1.1**
    * 
