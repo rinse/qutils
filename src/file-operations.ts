@@ -64,28 +64,60 @@ const generateUniqueId = (data: DiagramData): string => {
 };
 
 /**
- * ファイル名を生成（一意な識別子を含む）
- * 形式: {slug}-{image-description}.png
+ * マークダウンファイルからcontent-typeを判定
+ * articlesディレクトリなら'article'、booksディレクトリなら'book'
  *
+ * @param markdownPath - マークダウンファイルのパス
+ * @returns content-type ('article' または 'book')
+ */
+export const extractContentType = (markdownPath: string): 'article' | 'book' => {
+  const normalizedPath = markdownPath.replace(/\\/g, '/');
+
+  if (normalizedPath.includes('/articles/')) {
+    return 'article';
+  } else if (normalizedPath.includes('/books/')) {
+    return 'book';
+  }
+
+  // デフォルトはarticle
+  return 'article';
+};
+
+/**
+ * ファイル名を生成（content-type、slug、一意な識別子を含む）
+ * 形式: {content-type}-{slug}-{image-title}.png
+ * - articlesディレクトリ: article-{article-slug}-{image-title}.png
+ * - booksディレクトリ: book-{book-slug}-{page-slug}-{image-title}.png
+ *
+ * @param contentType - content-type ('article' または 'book')
  * @param slug - 記事のslug
  * @param data - 図式データ
  * @param extension - ファイル拡張子（デフォルト: 'png'）
  * @returns 生成されたファイル名
  */
-export const generateImageFileName = (slug: string, data: DiagramData, extension: string = 'png'): string => {
+export const generateImageFileName = (
+  contentType: 'article' | 'book',
+  slug: string,
+  data: DiagramData,
+  extension: string = 'png',
+): string => {
   const uniqueId = generateUniqueId(data);
-  return `${slug}-diagram-${uniqueId}.${extension}`;
+  return `${contentType}-${slug}-diagram-${uniqueId}.${extension}`;
 };
 
 /**
  * マークダウンファイルからslugを抽出
- * ファイル名またはフロントマターのメタデータから取得
+ * - articlesディレクトリ: ファイル名から取得
+ * - booksディレクトリ: {book-slug}-{page-slug}の形式で生成
  *
  * @param markdownPath - マークダウンファイルのパス
  * @param content - マークダウンファイルの内容
  * @returns 抽出されたslug
  */
 export const extractSlug = (markdownPath: string, content: string): string => {
+  const normalizedPath = markdownPath.replace(/\\/g, '/');
+  const contentType = extractContentType(markdownPath);
+
   // フロントマターからslugを抽出を試みる
   const frontmatterMatch = content.match(/^---\s*\n([\s\S]*?)\n---/);
   if (frontmatterMatch) {
@@ -96,7 +128,17 @@ export const extractSlug = (markdownPath: string, content: string): string => {
     }
   }
 
-  // フロントマターにslugがない場合、ファイル名から抽出
+  // booksディレクトリの場合: {book-slug}-{page-slug}の形式
+  if (contentType === 'book') {
+    const booksMatch = normalizedPath.match(/\/books\/([^/]+)\/([^/]+)\.md$/);
+    if (booksMatch) {
+      const bookSlug = booksMatch[1];
+      const pageSlug = path.basename(booksMatch[2], path.extname(booksMatch[2]));
+      return `${bookSlug}-${pageSlug}`;
+    }
+  }
+
+  // articlesディレクトリの場合: ファイル名から取得
   const basename = path.basename(markdownPath, path.extname(markdownPath));
   return basename;
 };

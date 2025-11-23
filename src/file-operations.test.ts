@@ -79,9 +79,9 @@ describe('file-operations', () => {
         ],
       };
 
-      const filename = generateImageFileName(slug, data);
+      const filename = generateImageFileName('article', slug, data);
 
-      expect(filename).toMatch(/^my-article-diagram-[a-f0-9]{8}\.png$/);
+      expect(filename).toMatch(/^article-my-article-diagram-[a-f0-9]{8}\.png$/);
     });
 
     it('should generate same filename for same data', () => {
@@ -91,8 +91,8 @@ describe('file-operations', () => {
         edges: [],
       };
 
-      const filename1 = generateImageFileName(slug, data);
-      const filename2 = generateImageFileName(slug, data);
+      const filename1 = generateImageFileName('article', slug, data);
+      const filename2 = generateImageFileName('article', slug, data);
 
       expect(filename1).toBe(filename2);
     });
@@ -108,8 +108,8 @@ describe('file-operations', () => {
         edges: [],
       };
 
-      const filename1 = generateImageFileName(slug, data1);
-      const filename2 = generateImageFileName(slug, data2);
+      const filename1 = generateImageFileName('article', slug, data1);
+      const filename2 = generateImageFileName('article', slug, data2);
 
       expect(filename1).not.toBe(filename2);
     });
@@ -470,13 +470,14 @@ describe('Property-Based Tests', () => {
   });
   /**
    * **Feature: quiver-image-generator, Property 7: ファイル名形式の遵守**
-   * **Validates: Requirements 2.1**
+   * **Validates: Requirements 2.2**
    *
-   * 生成されるファイル名は常に `{slug}-diagram-{uniqueId}.png` の形式であるべきである
+   * 生成されるファイル名は常に `{content-type}-{slug}-diagram-{uniqueId}.png` の形式であるべきである
    */
   it('Property 7: ファイル名形式の遵守 - 指定された形式に従う', () => {
     fc.assert(
       fc.property(
+        fc.constantFrom('article', 'book'), // content-type
         fc.stringMatching(/^[a-zA-Z0-9_-]+$/), // slug
         fc.record({
           nodes: fc.array(fc.record({
@@ -493,12 +494,12 @@ describe('Property-Based Tests', () => {
             style: fc.string(), // 簡易的なスタイル
           })),
         }),
-        (slug, data) => {
-          const filename = generateImageFileName(slug, data as DiagramData);
+        (contentType, slug, data) => {
+          const filename = generateImageFileName(contentType as 'article' | 'book', slug, data as DiagramData);
 
-          // 形式: {slug}-diagram-{uniqueId}.png
+          // 形式: {content-type}-{slug}-diagram-{uniqueId}.png
           // uniqueIdは8文字の16進数
-          const regex = new RegExp(`^${slug}-diagram-[a-f0-9]{8}\\.png$`);
+          const regex = new RegExp(`^${contentType}-${slug}-diagram-[a-f0-9]{8}\\.png$`);
           expect(filename).toMatch(regex);
         },
       ),
@@ -645,6 +646,7 @@ describe('Property-Based Tests', () => {
     // 同じslugで複数の異なる図式データを生成
     fc.assert(
       fc.property(
+        fc.constantFrom('article', 'book'), // content-type
         fc.stringMatching(/^[a-zA-Z0-9_-]{1,30}$/), // slug
         fc.array(diagramDataArbitrary, { minLength: 2, maxLength: 20 }) // 複数の図式データ
           .filter((diagrams) => {
@@ -654,24 +656,24 @@ describe('Property-Based Tests', () => {
             const uniqueSet = new Set(serialized);
             return uniqueSet.size === diagrams.length;
           }),
-        (slug, diagrams) => {
+        (contentType, slug, diagrams) => {
           // 各図式データからファイル名を生成
-          const filenames = diagrams.map(data => generateImageFileName(slug, data));
+          const filenames = diagrams.map(data => generateImageFileName(contentType as 'article' | 'book', slug, data));
 
           // プロパティ1: すべてのファイル名が一意であるべき
           const uniqueFilenames = new Set(filenames);
           expect(uniqueFilenames.size).toBe(filenames.length);
 
           // プロパティ2: すべてのファイル名が正しい形式であるべき
-          // 形式: {slug}-diagram-{8文字の16進数}.png
-          const regex = new RegExp(`^${slug}-diagram-[a-f0-9]{8}\\.png$`);
+          // 形式: {content-type}-{slug}-diagram-{8文字の16進数}.png
+          const regex = new RegExp(`^${contentType}-${slug}-diagram-[a-f0-9]{8}\\.png$`);
           filenames.forEach(filename => {
             expect(filename).toMatch(regex);
           });
 
-          // プロパティ3: 同じslugを使用しているべき
+          // プロパティ3: 同じcontent-typeとslugを使用しているべき
           filenames.forEach(filename => {
-            expect(filename.startsWith(`${slug}-diagram-`)).toBe(true);
+            expect(filename.startsWith(`${contentType}-${slug}-diagram-`)).toBe(true);
           });
 
           // プロパティ4: image-description部分（ハッシュ）が異なるべき

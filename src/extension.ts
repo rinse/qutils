@@ -59,6 +59,7 @@ const handleMarkdownSave = async (document: vscode.TextDocument): Promise<void> 
       document.uri.fsPath,
       config,
       cache,
+      workspaceFolder.uri.fsPath,
     );
 
     // キャッシュを保存

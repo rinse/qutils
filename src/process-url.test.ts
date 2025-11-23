@@ -52,6 +52,7 @@ describe('processSingleUrl', () => {
     const result = await processSingleUrl(
       quiverUrl,
       config,
+      'article',
       'test-article',
       cache,
       imagesDir,
@@ -101,6 +102,7 @@ describe('processSingleUrl', () => {
     const result = await processSingleUrl(
       quiverUrl,
       config,
+      'article',
       'test-article',
       cache,
       imagesDir,
@@ -157,6 +159,7 @@ describe('processSingleUrl', () => {
     const result = await processSingleUrl(
       quiverUrl,
       config,
+      'article',
       'test-article',
       cache,
       imagesDir,
@@ -214,7 +217,7 @@ End of article.`;
     // processMarkdownFileをインポート
     const { processMarkdownFile } = await import('./process-url');
 
-    const result = await processMarkdownFile(markdownPath, config, cache);
+    const result = await processMarkdownFile(markdownPath, config, cache, testDir);
 
     // 結果の検証
     expect(result.generatedImages.length).toBe(1);
@@ -251,7 +254,7 @@ Just plain text.`;
 
     const { processMarkdownFile } = await import('./process-url');
 
-    const result = await processMarkdownFile(markdownPath, config, cache);
+    const result = await processMarkdownFile(markdownPath, config, cache, testDir);
 
     // 結果の検証
     expect(result.generatedImages.length).toBe(0);
@@ -300,7 +303,7 @@ End of article.`;
 
     const { processMarkdownFile } = await import('./process-url');
 
-    const result = await processMarkdownFile(markdownPath, config, cache);
+    const result = await processMarkdownFile(markdownPath, config, cache, testDir);
 
     // 結果の検証
     expect(result.generatedImages.length).toBe(2);

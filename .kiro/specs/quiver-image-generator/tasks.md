@@ -99,7 +99,7 @@
   - `listImageFiles`関数を実装（imagesディレクトリ内の既存ファイル一覧を取得）
   - _要件: 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7_
 
-- [ ] 5.7 imagesディレクトリの位置と命名規則の更新
+- [x] 5.7 imagesディレクトリの位置と命名規則の更新
   - `file-operations.ts`の`generateImageFileName`関数を更新
     * content-typeとslugを引数として受け取るように変更
     * articlesディレクトリ: `article-{article-slug}-{image-title}.png`

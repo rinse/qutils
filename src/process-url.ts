@@ -8,7 +8,7 @@ import * as path from 'path';
 import type { QuiverUrl, ImageGenerationConfig, CacheEntry } from './types';
 import { decodeQuiverData } from './decoder';
 import { generateImage } from './image-generator';
-import { generateImageFileName, fileExists, extractSlug, replaceUrlWithImageRef } from './file-operations';
+import { generateImageFileName, fileExists, extractSlug, extractContentType, replaceUrlWithImageRef } from './file-operations';
 import { getCacheEntry, hasUrlChanged, addCacheEntry } from './cache';
 import { extractQuiverUrls } from './url-parser';
 
@@ -22,6 +22,7 @@ import { extractQuiverUrls } from './url-parser';
  *
  * @param quiverUrl - 処理するQuiverUrl
  * @param config - 画像生成の設定
+ * @param contentType - content-type ('article' または 'book')
  * @param slug - 記事のslug（ファイル名生成に使用）
  * @param cache - 現在のキャッシュエントリの配列
  * @param imagesDir - 画像を保存するディレクトリのパス
@@ -33,6 +34,7 @@ import { extractQuiverUrls } from './url-parser';
 export const processSingleUrl = async (
   quiverUrl: QuiverUrl,
   config: ImageGenerationConfig,
+  contentType: 'article' | 'book',
   slug: string,
   cache: ReadonlyArray<CacheEntry>,
   imagesDir: string,
@@ -65,7 +67,7 @@ export const processSingleUrl = async (
   const diagramData = decodeQuiverData(quiverUrl.encodedData);
 
   // 2. ファイル名を生成
-  const fileName = generateImageFileName(slug, diagramData);
+  const fileName = generateImageFileName(contentType, slug, diagramData);
   const fullPath = path.join(imagesDir, fileName);
 
   // 3. 画像を生成（戦略に基づいて適切な生成方法が選択される）
@@ -94,6 +96,7 @@ export const processSingleUrl = async (
  * @param filePath - 処理するマークダウンファイルのパス
  * @param config - 画像生成の設定
  * @param cache - 現在のキャッシュエントリの配列
+ * @param workspaceRoot - ワークスペースのルートディレクトリ
  * @returns 更新されたコンテンツ、更新されたキャッシュ、生成された画像のパス
  *
  * 要件: 1.1, 1.2, 1.3, 1.4, 1.5
@@ -102,6 +105,7 @@ export const processMarkdownFile = async (
   filePath: string,
   config: ImageGenerationConfig,
   cache: ReadonlyArray<CacheEntry>,
+  workspaceRoot: string,
 ): Promise<{
   readonly updatedContent: string;
   readonly updatedCache: ReadonlyArray<CacheEntry>;
@@ -110,7 +114,8 @@ export const processMarkdownFile = async (
   // 1. マークダウンファイルを読み込む
   const content = await fs.readFile(filePath, 'utf-8');
 
-  // 2. slugを抽出
+  // 2. content-typeとslugを抽出
+  const contentType = extractContentType(filePath);
   const slug = extractSlug(filePath, content);
 
   // 3. QuiverのURLを抽出
@@ -128,7 +133,7 @@ export const processMarkdownFile = async (
   // 4. 各URLを処理
   // ディレクトリパスを計算
   const markdownDir = path.dirname(filePath);
-  const imagesDir = path.join(markdownDir, 'images');
+  const imagesDir = path.join(workspaceRoot, 'images');
 
   // 処理結果を蓄積するための変数
   // イミュータブルな更新を行うため、reduceを使用
@@ -164,6 +169,7 @@ export const processMarkdownFile = async (
         const result = await processSingleUrl(
           quiverUrl,
           urlConfig,
+          contentType,
           slug,
           state.cache,
           imagesDir,
