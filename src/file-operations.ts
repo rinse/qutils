@@ -37,6 +37,16 @@ export const saveImageToFile = async (imageData: string | Buffer, filePath: stri
 };
 
 /**
+ * パスを正規化（Windowsのバックスラッシュをスラッシュに変換）
+ *
+ * @param filePath - 正規化するパス
+ * @returns 正規化されたパス
+ */
+const normalizePath = (filePath: string): string => {
+  return filePath.replace(/\\/g, '/');
+};
+
+/**
  * 図式データから一意な識別子を生成
  * ノードとエッジの情報からハッシュを計算
  *
@@ -71,7 +81,7 @@ const generateUniqueId = (data: DiagramData): string => {
  * @returns content-type ('article' または 'book')
  */
 export const extractContentType = (markdownPath: string): 'article' | 'book' => {
-  const normalizedPath = markdownPath.replace(/\\/g, '/');
+  const normalizedPath = normalizePath(markdownPath);
 
   if (normalizedPath.includes('/articles/')) {
     return 'article';
@@ -79,15 +89,17 @@ export const extractContentType = (markdownPath: string): 'article' | 'book' => 
     return 'book';
   }
 
-  // デフォルトはarticle
+  // articlesにもbooksにも該当しない場合は警告を出力
+  // Zennプロジェクト構造を前提としているため、デフォルトで'article'を返す
+  console.warn(`Warning: Path "${markdownPath}" does not match expected Zenn project structure (articles/ or books/). Defaulting to 'article'.`);
   return 'article';
 };
 
 /**
  * ファイル名を生成（content-type、slug、一意な識別子を含む）
- * 形式: {content-type}-{slug}-{image-title}.png
- * - articlesディレクトリ: article-{article-slug}-{image-title}.png
- * - booksディレクトリ: book-{book-slug}-{page-slug}-{image-title}.png
+ * 形式: {content-type}-{slug}-diagram-{uniqueId}.png
+ * - articlesディレクトリ: article-{article-slug}-diagram-{uniqueId}.png
+ * - booksディレクトリ: book-{book-slug}-{page-slug}-diagram-{uniqueId}.png
  *
  * @param contentType - content-type ('article' または 'book')
  * @param slug - 記事のslug
@@ -110,12 +122,17 @@ export const generateImageFileName = (
  * - articlesディレクトリ: ファイル名から取得
  * - booksディレクトリ: {book-slug}-{page-slug}の形式で生成
  *
+ * 注: この関数は内部でextractContentTypeを呼び出します。
+ * これは、extractSlugが単独で使用されるケースを想定しているためです。
+ * 呼び出し側で既にcontent-typeを持っている場合でも、
+ * パフォーマンスへの影響は軽微であり、関数の独立性を優先しています。
+ *
  * @param markdownPath - マークダウンファイルのパス
  * @param content - マークダウンファイルの内容
  * @returns 抽出されたslug
  */
 export const extractSlug = (markdownPath: string, content: string): string => {
-  const normalizedPath = markdownPath.replace(/\\/g, '/');
+  const normalizedPath = normalizePath(markdownPath);
   const contentType = extractContentType(markdownPath);
 
   // フロントマターからslugを抽出を試みる
@@ -129,6 +146,8 @@ export const extractSlug = (markdownPath: string, content: string): string => {
   }
 
   // booksディレクトリの場合: {book-slug}-{page-slug}の形式
+  // 注: 現在の実装は /books/{book-slug}/{page-slug}.md の構造のみを想定
+  // より深いネスト（例: /books/my-book/chapter1/page1.md）は現在サポートしていません
   if (contentType === 'book') {
     const booksMatch = normalizedPath.match(/\/books\/([^/]+)\/([^/]+)\.md$/);
     if (booksMatch) {

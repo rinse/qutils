@@ -13,6 +13,12 @@ import { getCacheEntry, hasUrlChanged, addCacheEntry } from './cache';
 import { extractQuiverUrls } from './url-parser';
 
 /**
+ * 画像を保存するディレクトリ名
+ * プロジェクトルートからの相対パス
+ */
+const IMAGES_DIR_NAME = 'images';
+
+/**
  * 単一のQuiverUrlを処理して画像を生成
  *
  * この関数は以下の処理を統合します：
@@ -133,7 +139,14 @@ export const processMarkdownFile = async (
   // 4. 各URLを処理
   // ディレクトリパスを計算
   const markdownDir = path.dirname(filePath);
-  const imagesDir = path.join(workspaceRoot, 'images');
+  const imagesDir = path.join(workspaceRoot, IMAGES_DIR_NAME);
+
+  // imagesディレクトリが存在しない場合は作成
+  try {
+    await fs.mkdir(imagesDir, { recursive: true });
+  } catch (error) {
+    throw new Error(`Failed to create images directory: ${error instanceof Error ? error.message : String(error)}`);
+  }
 
   // 処理結果を蓄積するための変数
   // イミュータブルな更新を行うため、reduceを使用

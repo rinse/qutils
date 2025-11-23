@@ -55,6 +55,8 @@ const handleMarkdownSave = async (document: vscode.TextDocument): Promise<void> 
     };
 
     // マークダウンファイルを処理（QuiverのURLを検出して画像を生成）
+    // 注: workspaceFolder.uri.fsPathは、マルチルートワークスペースの場合、
+    // ドキュメントが属するワークスペースフォルダのルートを指します
     const result = await processMarkdownFile(
       document.uri.fsPath,
       config,
