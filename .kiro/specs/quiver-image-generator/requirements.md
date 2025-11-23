@@ -14,6 +14,9 @@ Qutilsは、Quiver（可換図式作成ツール）で作成した図式を、Ze
 - **マークダウンファイル**: Zennの記事を記述するためのテキストファイル
 - **QuiverのURL**: `https://q.uiver.app/#q=...`の形式を持つURL
 - **SVG**: Scalable Vector Graphics、ベクター形式の画像フォーマット
+- **マークダウンリンク形式**: 画像をクリック可能なリンクとして表示するマークダウン構文（`[![代替テキスト](画像パス)](リンク先URL)`）。Qutilsが処理済みのURLや、手動で作成された画像リンクがこの形式を取る
+- **外部URL**: HTTPまたはHTTPSで始まる絶対URL（例: `https://storage.googleapis.com/zenn-user-upload/...`）。手動でアップロードされた画像を指す
+- **ローカルパス**: 相対パスまたは絶対パス形式のファイルパス（例: `./images/diagram.svg`、`/images/diagram.svg`）。Qutilsが生成した画像を指す
 
 ## 要件
 
@@ -72,6 +75,11 @@ Qutilsは、Quiver（可換図式作成ツール）で作成した図式を、Ze
 2. WHEN 画像ファイルが既に存在し、URLが変更されていない THEN Qutils SHALL 画像生成処理をスキップする
 3. WHEN 画像ファイルが存在するが、URLが変更されている THEN Qutils SHALL 画像を再生成する
 4. WHEN 画像ファイルが存在しない THEN Qutils SHALL 新しい画像を生成する
+5. WHEN QuiverのURLが既にマークダウンリンク形式（`[![...](image-path)](quiver-url)`）に置き換えられている THEN Qutils SHALL リンク内のQuiverのURLを抽出する
+6. WHEN マークダウンリンク形式の画像パスが外部URL（例: `https://storage.googleapis.com/zenn-user-upload/...`）である THEN Qutils SHALL その画像を手動で作成されたものとみなし、処理をスキップする
+7. WHEN マークダウンリンク形式の画像パスがローカルパス（例: `./images/...`）であり、画像ファイルが存在し、URLの内容が変更されていない THEN Qutils SHALL 画像生成処理をスキップする
+8. WHEN マークダウンリンク形式の画像パスがローカルパスであり、画像ファイルが存在するが、URLの内容が変更されている THEN Qutils SHALL 画像を再生成し、マークダウンを更新する
+9. WHEN マークダウンリンク形式の画像パスがローカルパスであり、画像ファイルが存在しない THEN Qutils SHALL 新しい画像を生成し、マークダウンを更新する
 
 ### 要件6
 
