@@ -173,6 +173,7 @@ function extractQuiverUrls(content: string): ReadonlyArray<QuiverUrl>;
 
 // 画像パスが外部URL（手動で作成された画像）かどうかを判定
 // 外部URLはhttpまたはhttpsで始まるURL
+// 主にZennの画像アップローダー（https://storage.googleapis.com/zenn-user-upload/）を想定
 function isExternalImageUrl(imagePath: string): boolean;
 
 // URLが既にマークダウンリンク形式に置き換えられているか確認
