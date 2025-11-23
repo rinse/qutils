@@ -70,6 +70,10 @@ const extractSvgFromPage = async (page: Page): Promise<string> => {
     `,
   });
 
+  // 選択状態を解除するために左上をクリック
+  // カーソルはCanvas上に描画されるため、CSSでは消せない
+  await page.mouse.click(0, 0);
+
   // 図式のバウンディングボックスを計算
   const clip = await page.evaluate(() => {
     const cells = Array.from(document.querySelectorAll('.cell'));
