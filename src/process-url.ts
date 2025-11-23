@@ -1,27 +1,27 @@
 /**
  * URL処理機能
- * 単一のQuiverUrlを処理してSVGを生成
+ * 単一のQuiverUrlを処理して画像を生成
  */
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import type { QuiverUrl, SvgGenerationConfig, CacheEntry } from './types';
+import type { QuiverUrl, ImageGenerationConfig, CacheEntry } from './types';
 import { decodeQuiverData } from './decoder';
-import { generateSvg } from './svg-generator';
-import { saveSvgToFile, generateImageFileName, fileExists, extractSlug, replaceUrlWithImageRef } from './file-operations';
+import { generateImage } from './image-generator';
+import { generateImageFileName, fileExists, extractSlug, replaceUrlWithImageRef } from './file-operations';
 import { getCacheEntry, hasUrlChanged, addCacheEntry } from './cache';
 import { extractQuiverUrls } from './url-parser';
 
 /**
- * 単一のQuiverUrlを処理してSVGを生成
+ * 単一のQuiverUrlを処理して画像を生成
  *
  * この関数は以下の処理を統合します：
  * 1. キャッシュチェック（URLが既に処理されているか確認）
- * 2. SVG生成（必要な場合のみ）
+ * 2. 画像生成（必要な場合のみ）
  * 3. ファイル保存
  *
  * @param quiverUrl - 処理するQuiverUrl
- * @param config - SVG生成の設定
+ * @param config - 画像生成の設定
  * @param slug - 記事のslug（ファイル名生成に使用）
  * @param cache - 現在のキャッシュエントリの配列
  * @param imagesDir - 画像を保存するディレクトリのパス
@@ -32,7 +32,7 @@ import { extractQuiverUrls } from './url-parser';
  */
 export const processSingleUrl = async (
   quiverUrl: QuiverUrl,
-  config: SvgGenerationConfig,
+  config: ImageGenerationConfig,
   slug: string,
   cache: ReadonlyArray<CacheEntry>,
   imagesDir: string,
@@ -59,7 +59,7 @@ export const processSingleUrl = async (
     }
   }
 
-  // キャッシュミスまたはURL変更: SVGを生成
+  // キャッシュミスまたはURL変更: 画像を生成
 
   // 1. 図式データをデコード（ファイル名生成に必要）
   const diagramData = decodeQuiverData(quiverUrl.encodedData);
@@ -68,13 +68,10 @@ export const processSingleUrl = async (
   const fileName = generateImageFileName(slug, diagramData);
   const fullPath = path.join(imagesDir, fileName);
 
-  // 3. SVGを生成
-  const svg = await generateSvg(config);
+  // 3. 画像を生成（戦略に基づいて適切な生成方法が選択される）
+  await generateImage(config, fullPath);
 
-  // 4. SVGをファイルに保存
-  await saveSvgToFile(svg, fullPath);
-
-  // 5. 相対パスを返す（マークダウンファイルから見た相対パス）
+  // 4. 相対パスを返す（マークダウンファイルから見た相対パス）
   const relativePath = path.relative(markdownDir, fullPath).replace(/\\/g, '/');
 
   return {
@@ -85,7 +82,7 @@ export const processSingleUrl = async (
 
 /**
  * マークダウンファイルを処理
- * すべてのQuiverUrlを検出し、SVGを生成し、ファイルを更新
+ * すべてのQuiverUrlを検出し、画像を生成し、ファイルを更新
  *
  * この関数は以下の処理を統合します：
  * 1. マークダウンファイルの読み込み
@@ -95,7 +92,7 @@ export const processSingleUrl = async (
  * 5. キャッシュの更新
  *
  * @param filePath - 処理するマークダウンファイルのパス
- * @param config - SVG生成の設定
+ * @param config - 画像生成の設定
  * @param cache - 現在のキャッシュエントリの配列
  * @returns 更新されたコンテンツ、更新されたキャッシュ、生成された画像のパス
  *
@@ -103,7 +100,7 @@ export const processSingleUrl = async (
  */
 export const processMarkdownFile = async (
   filePath: string,
-  config: SvgGenerationConfig,
+  config: ImageGenerationConfig,
   cache: ReadonlyArray<CacheEntry>,
 ): Promise<{
   readonly updatedContent: string;
@@ -159,7 +156,7 @@ export const processMarkdownFile = async (
       try {
         // 単一URLを処理
         // configにURLを設定
-        const urlConfig: SvgGenerationConfig = {
+        const urlConfig: ImageGenerationConfig = {
           ...config,
           input: quiverUrl.url,
         };

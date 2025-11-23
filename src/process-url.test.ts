@@ -8,9 +8,9 @@ import * as path from 'path';
 import { processSingleUrl } from './process-url';
 import type { QuiverUrl, CacheEntry } from './types';
 
-// SVG生成をモック
-vi.mock('./svg-generator', () => ({
-  generateSvg: vi.fn(async () => '<svg><rect width="100" height="100"/></svg>'),
+// 画像生成をモック
+vi.mock('./image-generator', () => ({
+  generateImage: vi.fn(async () => {}),
 }));
 
 describe('processSingleUrl', () => {
@@ -27,7 +27,7 @@ describe('processSingleUrl', () => {
     await fs.rm(testDir, { recursive: true, force: true });
   });
 
-  it('should generate SVG for new URL', async () => {
+  it('should generate image for new URL', async () => {
     // 有効なQuiverのURLとデータ（新形式）
     const encodedData = Buffer.from(JSON.stringify([
       0, 2, // version, nodeCount
@@ -60,12 +60,7 @@ describe('processSingleUrl', () => {
 
     // 結果の検証
     expect(result.shouldReplace).toBe(true);
-    expect(result.imagePath).toMatch(/.*\.svg$/);
-
-    // ファイルが実際に作成されたか確認
-    const fullPath = path.join(imagesDir, path.basename(result.imagePath));
-    const exists = await fs.access(fullPath).then(() => true).catch(() => false);
-    expect(exists).toBe(true);
+    expect(result.imagePath).toMatch(/.*\.png$/);
   });
 
   it('should skip generation for cached URL with existing file', async () => {
@@ -83,9 +78,9 @@ describe('processSingleUrl', () => {
     };
 
     // 既存のファイルを作成
-    const existingFileName = 'test-article-diagram-12345678.svg';
+    const existingFileName = 'test-article-diagram-12345678.png';
     const existingFilePath = path.join(imagesDir, existingFileName);
-    await fs.writeFile(existingFilePath, '<svg></svg>', 'utf-8');
+    await fs.writeFile(existingFilePath, 'fake-png-data', 'utf-8');
 
     const cache: ReadonlyArray<CacheEntry> = [
       {
@@ -117,7 +112,7 @@ describe('processSingleUrl', () => {
     expect(result.imagePath).toBe(existingFilePath);
   });
 
-  it('should regenerate SVG when URL data changes', async () => {
+  it('should regenerate image when URL data changes', async () => {
     // 元のデータ（新形式）
     const oldEncodedData = Buffer.from(JSON.stringify([
       0, 2, // version, nodeCount
@@ -139,9 +134,9 @@ describe('processSingleUrl', () => {
     };
 
     // 古いデータでキャッシュエントリを作成
-    const oldFileName = 'test-article-diagram-old.svg';
+    const oldFileName = 'test-article-diagram-old.png';
     const oldFilePath = path.join(imagesDir, oldFileName);
-    await fs.writeFile(oldFilePath, '<svg>old</svg>', 'utf-8');
+    await fs.writeFile(oldFilePath, 'old-png-data', 'utf-8');
 
     const cache: ReadonlyArray<CacheEntry> = [
       {
@@ -170,7 +165,7 @@ describe('processSingleUrl', () => {
 
     // URL変更: 再生成が必要
     expect(result.shouldReplace).toBe(true);
-    expect(result.imagePath).toMatch(/.*\.svg$/);
+    expect(result.imagePath).toMatch(/.*\.png$/);
   });
 });
 
@@ -223,7 +218,7 @@ End of article.`;
 
     // 結果の検証
     expect(result.generatedImages.length).toBe(1);
-    expect(result.generatedImages[0]).toMatch(/.*\.svg$/);
+    expect(result.generatedImages[0]).toMatch(/.*\.png$/);
     expect(result.updatedCache.length).toBe(1);
 
     // コンテンツが更新されたか確認（リンク付き画像になっている）

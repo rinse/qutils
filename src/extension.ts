@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { processMarkdownFile } from './process-url';
 import { loadCache, saveCache } from './cache';
-import type { CacheEntry, SvgGenerationConfig } from './types';
+import type { CacheEntry, ImageGenerationConfig } from './types';
 import { showErrorNotification, showSuccessNotification } from './error-notification';
 
 /**
@@ -25,7 +25,7 @@ const getCacheFilePath = (workspaceFolder: vscode.WorkspaceFolder): string => {
  *
  * この関数は以下の処理を行います：
  * 1. キャッシュを読み込む
- * 2. マークダウンファイルを処理（QuiverのURLを検出してSVGを生成）
+ * 2. マークダウンファイルを処理（QuiverのURLを検出して画像を生成）
  * 3. キャッシュを保存
  *
  * @param document - 処理するドキュメント
@@ -48,13 +48,13 @@ const handleMarkdownSave = async (document: vscode.TextDocument): Promise<void> 
     const cacheFilePath = getCacheFilePath(workspaceFolder);
     const cache: ReadonlyArray<CacheEntry> = await loadCache(cacheFilePath);
 
-    // SVG生成の設定（ブラウザベース戦略を使用）
-    const config: SvgGenerationConfig = {
+    // 画像生成の設定（ブラウザベース戦略を使用）
+    const config: ImageGenerationConfig = {
       strategy: 'browser',
       input: '', // processSingleUrlで各URLに対して設定される
     };
 
-    // マークダウンファイルを処理
+    // マークダウンファイルを処理（QuiverのURLを検出して画像を生成）
     const result = await processMarkdownFile(
       document.uri.fsPath,
       config,

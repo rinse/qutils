@@ -6,6 +6,9 @@
 // 生のURL文字列（例: "https://q.uiver.app/#q=..."）
 export type Url = string;
 
+// ファイルパス文字列
+export type FilePath = string;
+
 // 解析済みのQuiverのURL
 // マークダウンファイル内での位置情報を保持
 export type QuiverUrl = {
@@ -51,7 +54,7 @@ export type DiagramData = {
   };
 };
 
-// SVG生成戦略と入力の型レベル関連付け
+// 画像生成戦略と入力の型レベル関連付け
 // 初期実装ではBrowserStrategyのみを使用
 export type BrowserStrategy = {
   readonly strategy: 'browser';
@@ -69,8 +72,8 @@ export type TexStrategy = {
   readonly input: DiagramData;
 };
 
-// SVG生成の設定（初期実装ではBrowserStrategyのみ）
-export type SvgGenerationConfig = BrowserStrategy;
+// 画像生成の設定（初期実装ではBrowserStrategyのみ）
+export type ImageGenerationConfig = BrowserStrategy;
 
 // キャッシュエントリ
 export type CacheEntry = {
@@ -93,9 +96,9 @@ export type DecodeError = {
   readonly message: string;
 };
 
-export type SvgGenerationError = {
-  readonly type: 'svg-generation-error';
-  readonly config: SvgGenerationConfig;
+export type ImageGenerationError = {
+  readonly type: 'image-generation-error';
+  readonly config: ImageGenerationConfig;
   readonly message: string;
 };
 
@@ -105,4 +108,4 @@ export type FileIoError = {
   readonly message: string;
 };
 
-export type QutilsError = UrlParseError | DecodeError | SvgGenerationError | FileIoError;
+export type QutilsError = UrlParseError | DecodeError | ImageGenerationError | FileIoError;

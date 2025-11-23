@@ -1,14 +1,23 @@
 /**
- * SVG生成機能
- * QuiverのURLからSVG画像を生成する
+ * PNG生成機能（Browser戦略）
+ * QuiverのURLからPNG画像を生成する
  */
 
 import puppeteer, { Browser, Page } from 'puppeteer';
-import type { Url, SvgGenerationConfig, SvgGenerationError } from './types';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import type { BrowserStrategy, ImageGenerationError, FilePath } from './types';
 
 /**
  * ブラウザインスタンスのキャッシュ
- * 複数のSVG生成リクエストで再利用するため
+ * 複数のPNG生成リクエストで再利用するため
+ *
+ * 必要性: Puppeteerのブラウザ起動には数秒かかるため、
+ * 複数のリクエスト間でインスタンスを再利用することで
+ * パフォーマンスを大幅に向上させる必要がある。
+ * ブラウザインスタンスはステートレスであり、
+ * 各リクエストは独立したページで処理されるため、
+ * 共有しても問題ない。
  */
 let browserInstance: Browser | null = null;
 
@@ -46,19 +55,16 @@ export const closeBrowser = async (): Promise<void> => {
 };
 
 /**
- * QuiverのページからSVGを生成
+ * QuiverのページからPNG画像データを抽出
  *
  * Quiverはcanvasベースのレンダリングを使用しているため、
- * スクリーンショットを撮影してSVGラッパーで包む
- *
- * 注: 理想的にはQuiverのネイティブSVGエクスポート機能を使用すべきだが、
- * Quiverの内部APIが不安定なため、スクリーンショットアプローチを採用
+ * スクリーンショットを撮影してPNG画像データとして返す
  *
  * @param page - Puppeteerのページインスタンス
- * @returns SVG文字列（PNG画像を埋め込んだSVG）
- * @throws ページからSVGを生成できない場合
+ * @returns PNG画像データ（Buffer）
+ * @throws ページからPNGを抽出できない場合
  */
-const extractSvgFromPage = async (page: Page): Promise<string> => {
+const extractPngFromPage = async (page: Page): Promise<Buffer> => {
   // ページが完全にロードされるまで待機
   await page.waitForSelector('.cell', { timeout: 15000 });
 
@@ -73,6 +79,7 @@ const extractSvgFromPage = async (page: Page): Promise<string> => {
   );
 
   // 追加の待機時間を設けて、レンダリングが完了するのを待つ
+  // TODO: レンダリング完了を検出するより洗練された方法を検討
   await new Promise(resolve => setTimeout(resolve, 2000));
 
   // UI要素を非表示にするCSSを注入
@@ -117,41 +124,53 @@ const extractSvgFromPage = async (page: Page): Promise<string> => {
   });
 
   if (!clip) {
-    throw new Error('No diagram cells found on Quiver page');
+    const error: ImageGenerationError = {
+      type: 'image-generation-error',
+      config: { strategy: 'browser', input: page.url() },
+      message: 'No diagram cells found on Quiver page',
+    };
+    throw error;
   }
 
   // バウンディングボックスに基づいてスクリーンショットを撮影
   // omitBackground: true で背景を透明にする
-  const screenshot = await page.screenshot({
+  return await page.screenshot({
     clip: clip,
     omitBackground: true,
-    encoding: 'base64',
-  });
-
-  // PNG画像を埋め込んだSVGを生成
-  const svg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
-     width="${Math.ceil(clip.width)}" height="${Math.ceil(clip.height)}" 
-     viewBox="0 0 ${Math.ceil(clip.width)} ${Math.ceil(clip.height)}">
-  <rect width="100%" height="100%" fill="white"/>
-  <image width="${Math.ceil(clip.width)}" height="${Math.ceil(clip.height)}" 
-         xlink:href="data:image/png;base64,${screenshot}"/>
-</svg>`;
-
-  return svg;
+    encoding: 'binary',
+  }) as Buffer;
 };
 
 /**
- * ブラウザを使用してQuiverからSVGを取得
- * Puppeteerを使用してQuiverのページにアクセスし、レンダリングされたSVGを抽出
+ * PNG画像データをファイルに保存
  *
- * @param url - QuiverのURL
- * @returns SVG文字列
- * @throws SVG生成に失敗した場合
+ * @param imageData - PNG画像データ（Buffer）
+ * @param outputPath - PNG画像の出力先パス
+ * @throws ファイル保存に失敗した場合
+ */
+const savePngToFile = async (imageData: Buffer, outputPath: FilePath): Promise<void> => {
+  // ディレクトリが存在しない場合は作成
+  const dir = path.dirname(outputPath);
+  await fs.mkdir(dir, { recursive: true });
+
+  // PNG画像をファイルに保存
+  await fs.writeFile(outputPath, imageData);
+};
+
+/**
+ * ブラウザを使用してQuiverからPNGを生成
+ * Puppeteerを使用してQuiverのページにアクセスし、レンダリングされたPNGを生成
+ *
+ * @param config - Browser戦略の設定
+ * @param outputPath - PNG画像の出力先パス
+ * @throws PNG生成に失敗した場合
  *
  * 要件: 1.3, 6.1, 6.3
  */
-export const generateSvgFromBrowser = async (url: Url): Promise<string> => {
+export const generatePngFromBrowser = async (
+  config: BrowserStrategy,
+  outputPath: FilePath,
+): Promise<void> => {
   let page: Page | null = null;
 
   try {
@@ -174,42 +193,27 @@ export const generateSvgFromBrowser = async (url: Url): Promise<string> => {
     });
 
     // Quiverのページにアクセス
-    await page.goto(url, {
+    await page.goto(config.input, {
       waitUntil: 'networkidle0',
       timeout: 30000,
     });
 
-    // SVGを抽出
-    const svg = await extractSvgFromPage(page);
+    // PNGを抽出
+    const imageData = await extractPngFromPage(page);
 
-    return svg;
+    // ファイルに保存
+    await savePngToFile(imageData, outputPath);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw {
-      type: 'svg-generation-error',
-      config: { strategy: 'browser', input: url },
-      message: `Failed to generate SVG from browser: ${message}`,
-    } as SvgGenerationError;
+      type: 'image-generation-error',
+      config,
+      message: `Failed to generate PNG from browser: ${message}`,
+    } as ImageGenerationError;
   } finally {
     // ページをクローズ（ブラウザは再利用のため開いたまま）
     if (page) {
       await page.close();
     }
   }
-};
-
-/**
- * 設定に基づいてSVGを生成
- * 初期実装ではBrowserStrategyのみをサポート
- *
- * @param config - SVG生成の設定
- * @returns SVG文字列
- * @throws SVG生成に失敗した場合
- *
- * 要件: 1.3
- */
-export const generateSvg = async (config: SvgGenerationConfig): Promise<string> => {
-  // 初期実装ではBrowserStrategyのみ
-  // SvgGenerationConfig = BrowserStrategyなので、常にこの分岐に入る
-  return generateSvgFromBrowser(config.input);
 };

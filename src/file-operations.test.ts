@@ -8,7 +8,7 @@ import * as path from 'path';
 import * as os from 'os';
 import * as fc from 'fast-check';
 import {
-  saveSvgToFile,
+  saveImageToFile,
   generateImageFileName,
   extractSlug,
   replaceUrlWithImageRef,
@@ -33,33 +33,33 @@ describe('file-operations', () => {
     }
   });
 
-  describe('saveSvgToFile', () => {
-    it('should save SVG content to file', async () => {
-      const svg = '<svg><circle r="10"/></svg>';
-      const filePath = path.join(tempDir, 'test.svg');
+  describe('saveImageToFile', () => {
+    it('should save image content to file', async () => {
+      const imageData = '<svg><circle r="10"/></svg>';
+      const filePath = path.join(tempDir, 'test.png');
 
-      await saveSvgToFile(svg, filePath);
+      await saveImageToFile(imageData, filePath);
 
       const content = await fs.readFile(filePath, 'utf-8');
-      expect(content).toBe(svg);
+      expect(content).toBe(imageData);
     });
 
     it('should create directory if it does not exist', async () => {
-      const svg = '<svg><circle r="10"/></svg>';
-      const filePath = path.join(tempDir, 'subdir', 'test.svg');
+      const imageData = '<svg><circle r="10"/></svg>';
+      const filePath = path.join(tempDir, 'subdir', 'test.png');
 
-      await saveSvgToFile(svg, filePath);
+      await saveImageToFile(imageData, filePath);
 
       const content = await fs.readFile(filePath, 'utf-8');
-      expect(content).toBe(svg);
+      expect(content).toBe(imageData);
     });
 
     it('should throw FileIoError on write failure', async () => {
-      const svg = '<svg><circle r="10"/></svg>';
+      const imageData = '<svg><circle r="10"/></svg>';
       // 無効なパスを使用
-      const filePath = path.join(tempDir, 'nonexistent', 'deeply', 'nested', 'path', '\0invalid', 'test.svg');
+      const filePath = path.join(tempDir, 'nonexistent', 'deeply', 'nested', 'path', '\0invalid', 'test.png');
 
-      await expect(saveSvgToFile(svg, filePath)).rejects.toMatchObject({
+      await expect(saveImageToFile(imageData, filePath)).rejects.toMatchObject({
         type: 'file-io-error',
         path: filePath,
       });
@@ -81,7 +81,7 @@ describe('file-operations', () => {
 
       const filename = generateImageFileName(slug, data);
 
-      expect(filename).toMatch(/^my-article-diagram-[a-f0-9]{8}\.svg$/);
+      expect(filename).toMatch(/^my-article-diagram-[a-f0-9]{8}\.png$/);
     });
 
     it('should generate same filename for same data', () => {
@@ -174,12 +174,12 @@ slug: "quoted-slug"
         encodedData: 'abc123',
         position: { start: 20, end: 49 }, // URLのみ（29文字）
       };
-      const imagePath = './images/diagram.svg';
+      const imagePath = './images/diagram.png';
 
       const result = replaceUrlWithImageRef(content, url, imagePath);
 
       // URLが画像リンクに置換され、クリックするとQuiverのページに飛ぶ
-      expect(result).toBe('Check this diagram: [![diagram](./images/diagram.svg)](https://q.uiver.app/#q=abc123) for details.');
+      expect(result).toBe('Check this diagram: [![diagram](./images/diagram.png)](https://q.uiver.app/#q=abc123) for details.');
     });
 
     it('should handle URL at the beginning of content', () => {
@@ -189,11 +189,11 @@ slug: "quoted-slug"
         encodedData: 'xyz789',
         position: { start: 0, end: 29 },
       };
-      const imagePath = './images/test.svg';
+      const imagePath = './images/test.png';
 
       const result = replaceUrlWithImageRef(content, url, imagePath);
 
-      expect(result).toBe('[![diagram](./images/test.svg)](https://q.uiver.app/#q=xyz789) is the diagram.');
+      expect(result).toBe('[![diagram](./images/test.png)](https://q.uiver.app/#q=xyz789) is the diagram.');
     });
 
     it('should handle URL at the end of content', () => {
@@ -203,11 +203,11 @@ slug: "quoted-slug"
         encodedData: 'end123',
         position: { start: 5, end: 35 },
       };
-      const imagePath = './images/final.svg';
+      const imagePath = './images/final.png';
 
       const result = replaceUrlWithImageRef(content, url, imagePath);
 
-      expect(result).toBe('See: [![diagram](./images/final.svg)](https://q.uiver.app/#q=end123)');
+      expect(result).toBe('See: [![diagram](./images/final.png)](https://q.uiver.app/#q=end123)');
     });
   });
 
@@ -296,17 +296,17 @@ describe('Property-Based Tests', () => {
     // 画像パスのジェネレーター
     const imagePathArbitrary = fc.oneof(
       // 相対パス
-      fc.stringMatching(/^[a-zA-Z0-9_-]{1,20}$/).map(name => `./${name}.svg`),
+      fc.stringMatching(/^[a-zA-Z0-9_-]{1,20}$/).map(name => `./${name}.png`),
       fc.tuple(
         fc.stringMatching(/^[a-zA-Z0-9_-]{1,20}$/),
         fc.stringMatching(/^[a-zA-Z0-9_-]{1,20}$/),
-      ).map(([dir, name]) => `./${dir}/${name}.svg`),
+      ).map(([dir, name]) => `./${dir}/${name}.png`),
 
       // 絶対パス風
       fc.tuple(
         fc.stringMatching(/^[a-zA-Z0-9_-]{1,20}$/),
         fc.stringMatching(/^[a-zA-Z0-9_-]{1,20}$/),
-      ).map(([dir, name]) => `/images/${dir}/${name}.svg`),
+      ).map(([dir, name]) => `/images/${dir}/${name}.png`),
     );
 
     fc.assert(
@@ -361,11 +361,11 @@ describe('Property-Based Tests', () => {
    * **Feature: quiver-image-generator, Property 5: ファイル保存の成功**
    * **Validates: Requirements 1.4**
    *
-   * 任意のSVG文字列とファイルパスに対して、保存後にそのパスに
+   * 任意の画像データとファイルパスに対して、保存後にそのパスに
    * ファイルが存在するべきである
    */
   it('Property 5: ファイル保存の成功 - 保存後にファイルが存在する', async () => {
-    // SVG文字列のジェネレーター
+    // 画像データのジェネレーター（テスト用にSVG文字列を使用）
     // 有効なSVG要素を含む文字列を生成
     const svgContentArbitrary = fc.oneof(
       // 基本的なSVG要素
@@ -426,7 +426,7 @@ describe('Property-Based Tests', () => {
     // ファイル名のジェネレーター
     // 有効なファイル名文字のみを使用（Windows/Unix互換）
     const fileNameArbitrary = fc.stringMatching(/^[a-zA-Z0-9_-]{1,50}$/)
-      .map((name) => `${name}.svg`);
+      .map((name) => `${name}.png`);
 
     // サブディレクトリのジェネレーター（オプション）
     const subDirArbitrary = fc.oneof(
@@ -449,8 +449,8 @@ describe('Property-Based Tests', () => {
             ? path.join(tempDir, subDir, fileName)
             : path.join(tempDir, fileName);
 
-          // SVGを保存
-          await saveSvgToFile(svgContent, filePath);
+          // 画像を保存
+          await saveImageToFile(svgContent, filePath);
 
           // ファイルが存在することを確認
           const exists = await fileExists(filePath);
@@ -472,7 +472,7 @@ describe('Property-Based Tests', () => {
    * **Feature: quiver-image-generator, Property 7: ファイル名形式の遵守**
    * **Validates: Requirements 2.1**
    *
-   * 生成されるファイル名は常に `{slug}-diagram-{uniqueId}.svg` の形式であるべきである
+   * 生成されるファイル名は常に `{slug}-diagram-{uniqueId}.png` の形式であるべきである
    */
   it('Property 7: ファイル名形式の遵守 - 指定された形式に従う', () => {
     fc.assert(
@@ -496,9 +496,9 @@ describe('Property-Based Tests', () => {
         (slug, data) => {
           const filename = generateImageFileName(slug, data as DiagramData);
 
-          // 形式: {slug}-diagram-{uniqueId}.svg
+          // 形式: {slug}-diagram-{uniqueId}.png
           // uniqueIdは8文字の16進数
-          const regex = new RegExp(`^${slug}-diagram-[a-f0-9]{8}\\.svg$`);
+          const regex = new RegExp(`^${slug}-diagram-[a-f0-9]{8}\\.png$`);
           expect(filename).toMatch(regex);
         },
       ),
@@ -663,8 +663,8 @@ describe('Property-Based Tests', () => {
           expect(uniqueFilenames.size).toBe(filenames.length);
 
           // プロパティ2: すべてのファイル名が正しい形式であるべき
-          // 形式: {slug}-diagram-{8文字の16進数}.svg
-          const regex = new RegExp(`^${slug}-diagram-[a-f0-9]{8}\\.svg$`);
+          // 形式: {slug}-diagram-{8文字の16進数}.png
+          const regex = new RegExp(`^${slug}-diagram-[a-f0-9]{8}\\.png$`);
           filenames.forEach(filename => {
             expect(filename).toMatch(regex);
           });
@@ -677,7 +677,7 @@ describe('Property-Based Tests', () => {
           // プロパティ4: image-description部分（ハッシュ）が異なるべき
           // ファイル名から image-description を抽出
           const imageDescriptions = filenames.map(filename => {
-            const match = filename.match(/-diagram-([a-f0-9]{8})\.svg$/);
+            const match = filename.match(/-diagram-([a-f0-9]{8})\.png$/);
             return match ? match[1] : null;
           });
 

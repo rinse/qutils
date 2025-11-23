@@ -1,6 +1,6 @@
 /**
  * ファイル操作関数
- * SVGファイルの保存、ファイル名生成、マークダウン操作などを提供
+ * 画像ファイルの保存、ファイル名生成、マークダウン操作などを提供
  */
 
 import * as fs from 'fs/promises';
@@ -9,25 +9,28 @@ import { createHash } from 'crypto';
 import type { DiagramData, QuiverUrl, FileIoError } from './types';
 
 /**
- * SVGをファイルに保存
+ * 画像をファイルに保存
  * 保存に失敗した場合はFileIoErrorをスロー
  *
- * @param svg - 保存するSVG文字列
+ * 注意: この関数は現在テストでのみ使用されています。
+ * 実際の実装では、png-generatorが直接ファイルに書き込みます。
+ *
+ * @param imageData - 保存する画像データ（バイナリまたはテキスト）
  * @param filePath - 保存先のファイルパス
  */
-export const saveSvgToFile = async (svg: string, filePath: string): Promise<void> => {
+export const saveImageToFile = async (imageData: string | Buffer, filePath: string): Promise<void> => {
   try {
     // ディレクトリが存在しない場合は作成
     const dir = path.dirname(filePath);
     await fs.mkdir(dir, { recursive: true });
 
-    // SVGファイルを書き込み
-    await fs.writeFile(filePath, svg, 'utf-8');
+    // 画像ファイルを書き込み
+    await fs.writeFile(filePath, imageData);
   } catch (error) {
     const fileIoError: FileIoError = {
       type: 'file-io-error',
       path: filePath,
-      message: `Failed to save SVG file: ${error instanceof Error ? error.message : String(error)}`,
+      message: `Failed to save image file: ${error instanceof Error ? error.message : String(error)}`,
     };
     throw fileIoError;
   }
@@ -62,15 +65,16 @@ const generateUniqueId = (data: DiagramData): string => {
 
 /**
  * ファイル名を生成（一意な識別子を含む）
- * 形式: {slug}-{image-description}.svg
+ * 形式: {slug}-{image-description}.png
  *
  * @param slug - 記事のslug
  * @param data - 図式データ
+ * @param extension - ファイル拡張子（デフォルト: 'png'）
  * @returns 生成されたファイル名
  */
-export const generateImageFileName = (slug: string, data: DiagramData): string => {
+export const generateImageFileName = (slug: string, data: DiagramData, extension: string = 'png'): string => {
   const uniqueId = generateUniqueId(data);
-  return `${slug}-diagram-${uniqueId}.svg`;
+  return `${slug}-diagram-${uniqueId}.${extension}`;
 };
 
 /**
