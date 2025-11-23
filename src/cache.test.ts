@@ -443,4 +443,76 @@ describe('Property-Based Tests', () => {
       { numRuns: 100 } // 最低100回の反復を実行
     );
   });
+
+  /**
+   * **Feature: quiver-image-generator, Property 14: URL変更時の再生成**
+   * **Validates: Requirements 5.3**
+   * 
+   * 任意のURLに対して、URLのデータ部分が変更された場合、
+   * 画像は再生成されるべきである
+   * 
+   * より具体的には、URLは同じでもencodedDataが変更された場合、
+   * hasUrlChangedはtrueを返し、画像の再生成が必要であることを示すべきである
+   */
+  it('Property 14: URL変更時の再生成 - URLのデータ部分が変更された場合、再生成が必要', () => {
+    // fast-checkをインポート
+    const fc = require('fast-check');
+    
+    // Base64文字列のジェネレーター（URL-safe Base64）
+    const base64Arbitrary = fc.stringMatching(/^[A-Za-z0-9_-]{1,100}={0,2}$/);
+    
+    // QuiverのURLジェネレーター
+    const quiverUrlArbitrary = base64Arbitrary.map(
+      (encodedData: string) => `https://q.uiver.app/#q=${encodedData}`
+    );
+    
+    // ファイルパスジェネレーター
+    const filePathArbitrary = fc.tuple(
+      fc.stringMatching(/^[a-z0-9-]{1,20}$/),
+      fc.stringMatching(/^[a-z0-9-]{1,20}$/),
+      fc.stringMatching(/^[a-z0-9-]{1,20}$/)
+    ).map(([slug, desc, ext]) => `/path/to/${slug}-${desc}.${ext}`);
+    
+    // タイムスタンプジェネレーター
+    const timestampArbitrary = fc.integer({ min: 0, max: Date.now() });
+    
+    // テスト: URLは同じでもencodedDataが変更された場合、hasUrlChangedがtrueを返す
+    fc.assert(
+      fc.property(
+        quiverUrlArbitrary,
+        base64Arbitrary,
+        base64Arbitrary,
+        filePathArbitrary,
+        timestampArbitrary,
+        (url: string, originalData: string, newData: string, imagePath: string, timestamp: number) => {
+          // 異なるencodedDataを保証するためのフィルター
+          fc.pre(originalData !== newData);
+          
+          // 1回目の処理: 元のデータでキャッシュにエントリを追加
+          const initialCache: ReadonlyArray<CacheEntry> = [];
+          const entry: CacheEntry = {
+            url,
+            encodedData: originalData,
+            imagePath,
+            timestamp,
+          };
+          const cacheAfterFirst = addCacheEntry(initialCache, entry);
+          
+          // 2回目の処理: 同じURLだが異なるencodedDataで確認
+          const urlChanged = hasUrlChanged(url, newData, cacheAfterFirst);
+          
+          // URLのデータ部分が変更されたので、trueを返すべき
+          expect(urlChanged).toBe(true);
+          
+          // キャッシュエントリは存在するが、encodedDataが異なる
+          const cachedEntry = getCacheEntry(url, cacheAfterFirst);
+          expect(cachedEntry).toBeDefined();
+          expect(cachedEntry?.url).toBe(url);
+          expect(cachedEntry?.encodedData).toBe(originalData);
+          expect(cachedEntry?.encodedData).not.toBe(newData);
+        }
+      ),
+      { numRuns: 100 } // 最低100回の反復を実行
+    );
+  });
 });
