@@ -295,3 +295,85 @@ describe('loadCache and saveCache', () => {
     expect(loaded).toEqual(cache);
   });
 });
+
+/**
+ * プロパティベーステスト
+ * fast-checkを使用して、様々な入力に対する正確性を検証
+ */
+describe('Property-Based Tests', () => {
+  /**
+   * **Feature: quiver-image-generator, Property 12: キャッシュヒットの検出**
+   * **Validates: Requirements 5.1**
+   * 
+   * 任意のURLに対して、対応する画像ファイルが存在する場合、
+   * 存在確認は真を返すべきである
+   * 
+   * より具体的には、キャッシュにURLが存在する場合、getCacheEntryは
+   * 対応するエントリを返すべきである
+   */
+  it('Property 12: キャッシュヒットの検出 - キャッシュに存在するURLは検出される', () => {
+    // fast-checkをインポート
+    const fc = require('fast-check');
+    
+    // Base64文字列のジェネレーター（URL-safe Base64）
+    const base64Arbitrary = fc.stringMatching(/^[A-Za-z0-9_-]{1,100}={0,2}$/);
+    
+    // QuiverのURLジェネレーター
+    const quiverUrlArbitrary = base64Arbitrary.map(
+      (encodedData: string) => `https://q.uiver.app/#q=${encodedData}`
+    );
+    
+    // ファイルパスジェネレーター
+    const filePathArbitrary = fc.tuple(
+      fc.stringMatching(/^[a-z0-9-]{1,20}$/),
+      fc.stringMatching(/^[a-z0-9-]{1,20}$/),
+      fc.stringMatching(/^[a-z0-9-]{1,20}$/)
+    ).map(([slug, desc, ext]) => `/path/to/${slug}-${desc}.${ext}`);
+    
+    // タイムスタンプジェネレーター
+    const timestampArbitrary = fc.integer({ min: 0, max: Date.now() });
+    
+    // CacheEntryジェネレーター
+    const cacheEntryArbitrary = fc.tuple(
+      quiverUrlArbitrary,
+      base64Arbitrary,
+      filePathArbitrary,
+      timestampArbitrary
+    ).map(([url, encodedData, imagePath, timestamp]) => ({
+      url,
+      encodedData,
+      imagePath,
+      timestamp,
+    }));
+    
+    // テスト: キャッシュに追加したエントリは必ず取得できる
+    fc.assert(
+      fc.property(
+        fc.array(cacheEntryArbitrary, { minLength: 1, maxLength: 20 }),
+        fc.integer({ min: 0, max: 19 }),
+        (entries: CacheEntry[], targetIndex: number) => {
+          // インデックスを配列の範囲内に調整
+          const actualIndex = targetIndex % entries.length;
+          const targetEntry = entries[actualIndex];
+          
+          // キャッシュを構築
+          let cache: ReadonlyArray<CacheEntry> = [];
+          for (const entry of entries) {
+            cache = addCacheEntry(cache, entry);
+          }
+          
+          // ターゲットURLでキャッシュエントリを取得
+          const result = getCacheEntry(targetEntry.url, cache);
+          
+          // エントリが見つかることを確認
+          expect(result).toBeDefined();
+          expect(result?.url).toBe(targetEntry.url);
+          expect(result?.encodedData).toBe(targetEntry.encodedData);
+          expect(result?.imagePath).toBe(targetEntry.imagePath);
+          expect(result?.timestamp).toBe(targetEntry.timestamp);
+        }
+      ),
+      { numRuns: 100 } // 最低100回の反復を実行
+    );
+  });
+});
