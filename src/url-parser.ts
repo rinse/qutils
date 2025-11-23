@@ -48,8 +48,35 @@ export const parseQuiverUrl = (
 };
 
 /**
+ * URLがすでにマークダウンのリンク構文内にあるか確認
+ * リンク構文: [text](URL) または [![alt](img)](URL)
+ *
+ * @param content - マークダウンコンテンツ
+ * @param urlStart - URLの開始位置
+ * @returns リンク構文内にある場合はtrue
+ */
+const isUrlInLinkSyntax = (content: string, urlStart: number): boolean => {
+  // URLの前の部分を確認（最大200文字前まで）
+  const beforeUrl = content.substring(Math.max(0, urlStart - 200), urlStart);
+
+  // 最後の '](' を探す
+  const lastLinkStart = beforeUrl.lastIndexOf('](');
+
+  if (lastLinkStart === -1) {
+    return false;
+  }
+
+  // '](' の後にURLが直接続いているか確認
+  const textBetween = beforeUrl.substring(lastLinkStart + 2);
+
+  // '](' とURLの間に空白以外の文字がある場合は別のリンク
+  return textBetween.trim() === '';
+};
+
+/**
  * マークダウンコンテンツからQuiverのURLを抽出
  * 不正なURLはスキップされ、有効なURLのみ返される
+ * すでにリンク構文内にあるURLは除外される
  *
  * @param content - マークダウンコンテンツ
  * @returns 検出されたQuiverUrlの配列
@@ -65,6 +92,11 @@ export const extractQuiverUrls = (content: string): ReadonlyArray<QuiverUrl> => 
     const url = match[0];
     const start = match.index;
     const end = start + url.length;
+
+    // すでにリンク構文内にあるURLはスキップ
+    if (isUrlInLinkSyntax(content, start)) {
+      continue;
+    }
 
     try {
       // parseQuiverUrlを使用して検証

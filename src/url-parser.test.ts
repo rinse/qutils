@@ -145,6 +145,55 @@ https://q.uiver.app/#q=WzAsOCxbMCwwLCJcXG1hdGhiZiBDIl0sWzAsMSwiQSJdLFswLDIsIkIiX
     const extractedUrl = content.substring(result[0].position.start, result[0].position.end);
     expect(extractedUrl).toBe(result[0].url);
   });
+
+  it('リンク構文内のURLは除外される', () => {
+    const content = `
+# タイトル
+
+すでに置き換え済みの画像：
+[![diagram](images/test.svg)](https://q.uiver.app/#q=replaced)
+
+まだ置き換えていないURL：
+https://q.uiver.app/#q=notReplaced
+    `;
+    
+    const result = extractQuiverUrls(content);
+    
+    // リンク構文内のURLは除外され、生のURLのみが検出される
+    expect(result).toHaveLength(1);
+    expect(result[0].encodedData).toBe('notReplaced');
+  });
+
+  it('複数のリンク構文内のURLと生のURLが混在する場合、生のURLのみが検出される', () => {
+    const content = `
+[![diagram](images/first.svg)](https://q.uiver.app/#q=first)
+
+https://q.uiver.app/#q=second
+
+[![diagram](images/third.svg)](https://q.uiver.app/#q=third)
+
+https://q.uiver.app/#q=fourth
+    `;
+    
+    const result = extractQuiverUrls(content);
+    
+    expect(result).toHaveLength(2);
+    expect(result[0].encodedData).toBe('second');
+    expect(result[1].encodedData).toBe('fourth');
+  });
+
+  it('通常のリンク構文内のURLも除外される', () => {
+    const content = `
+[リンクテキスト](https://q.uiver.app/#q=inLink)
+
+https://q.uiver.app/#q=notInLink
+    `;
+    
+    const result = extractQuiverUrls(content);
+    
+    expect(result).toHaveLength(1);
+    expect(result[0].encodedData).toBe('notInLink');
+  });
 });
 
 describe('isUrlReplaced', () => {
