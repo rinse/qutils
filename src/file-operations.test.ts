@@ -504,4 +504,106 @@ describe('Property-Based Tests', () => {
       )
     );
   });
+
+  /**
+   * **Feature: quiver-image-generator, Property 8: slug抽出の成功**
+   * **Validates: Requirements 2.2**
+   * 
+   * 任意のマークダウンファイルパスまたはメタデータに対して、
+   * 有効なslugが抽出されるべきである
+   */
+  it('Property 8: slug抽出の成功 - フロントマターまたはファイル名からslugを抽出', () => {
+    // フロントマターを持つマークダウンコンテンツのジェネレーター
+    const frontmatterContentArbitrary = fc.record({
+      slug: fc.stringMatching(/^[a-zA-Z0-9_-]{1,50}$/),
+      title: fc.string({ maxLength: 100 }),
+      otherFields: fc.string({ maxLength: 200 })
+    }).map(({ slug, title, otherFields }) => {
+      // フロントマターの形式を様々にする
+      const formats = [
+        `---\nslug: ${slug}\ntitle: ${title}\n${otherFields}\n---\n\n# Content`,
+        `---\nslug: "${slug}"\ntitle: ${title}\n---\n\n# Content`,
+        `---\nslug: '${slug}'\ntitle: ${title}\n---\n\n# Content`,
+        `---\ntitle: ${title}\nslug: ${slug}\n---\n\n# Content`,
+      ];
+      const content = formats[Math.floor(Math.random() * formats.length)];
+      return { content, expectedSlug: slug };
+    });
+
+    // フロントマターなしのマークダウンコンテンツのジェネレーター
+    const noFrontmatterContentArbitrary = fc.string({ maxLength: 500 })
+      .filter(s => !s.startsWith('---')) // フロントマターでないことを保証
+      .map(content => ({ content, expectedSlug: null }));
+
+    // ファイルパスのジェネレーター
+    const filePathArbitrary = fc.record({
+      dir: fc.stringMatching(/^[a-zA-Z0-9_-]{1,20}$/),
+      filename: fc.stringMatching(/^[a-zA-Z0-9_-]{1,50}$/),
+      ext: fc.constantFrom('.md', '.markdown')
+    }).map(({ dir, filename, ext }) => ({
+      path: path.join('/', dir, filename + ext),
+      expectedSlugFromFilename: filename
+    }));
+
+    // テスト1: フロントマターからslugを抽出
+    fc.assert(
+      fc.property(
+        frontmatterContentArbitrary,
+        filePathArbitrary,
+        ({ content, expectedSlug }, { path: filePath }) => {
+          const slug = extractSlug(filePath, content);
+
+          // フロントマターにslugがある場合、それが抽出されるべき
+          expect(slug).toBe(expectedSlug);
+          // slugは空でないべき
+          expect(slug.length).toBeGreaterThan(0);
+          // slugは有効な文字のみを含むべき
+          expect(slug).toMatch(/^[a-zA-Z0-9_-]+$/);
+        }
+      ),
+      { numRuns: 100 }
+    );
+
+    // テスト2: フロントマターがない場合、ファイル名からslugを抽出
+    fc.assert(
+      fc.property(
+        noFrontmatterContentArbitrary,
+        filePathArbitrary,
+        ({ content }, { path: filePath, expectedSlugFromFilename }) => {
+          const slug = extractSlug(filePath, content);
+
+          // ファイル名からslugが抽出されるべき
+          expect(slug).toBe(expectedSlugFromFilename);
+          // slugは空でないべき
+          expect(slug.length).toBeGreaterThan(0);
+        }
+      ),
+      { numRuns: 100 }
+    );
+
+    // テスト3: フロントマターにslugがない場合、ファイル名からslugを抽出
+    const frontmatterWithoutSlugArbitrary = fc.record({
+      title: fc.string({ maxLength: 100 }),
+      date: fc.string({ maxLength: 20 })
+    }).map(({ title, date }) => {
+      const content = `---\ntitle: ${title}\ndate: ${date}\n---\n\n# Content`;
+      return { content };
+    });
+
+    fc.assert(
+      fc.property(
+        frontmatterWithoutSlugArbitrary,
+        filePathArbitrary,
+        ({ content }, { path: filePath, expectedSlugFromFilename }) => {
+          const slug = extractSlug(filePath, content);
+
+          // ファイル名からslugが抽出されるべき
+          expect(slug).toBe(expectedSlugFromFilename);
+          // slugは空でないべき
+          expect(slug.length).toBeGreaterThan(0);
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
 });

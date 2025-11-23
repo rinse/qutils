@@ -35,6 +35,6 @@ module.exports = [
     },
   },
   {
-    ignores: ['node_modules/**', 'dist/**', '**/*.js', '**/*.test.ts', 'vitest.config.ts'],
+    ignores: ['node_modules/**', 'dist/**', '**/*.js', '**/*.test.ts', 'vitest.config.ts', '.wt/**'],
   },
 ];
