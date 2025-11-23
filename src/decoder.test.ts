@@ -231,3 +231,49 @@ describe('Property 3: デコードの往復一貫性', () => {
     );
   });
 });
+
+/**
+ * **Feature: quiver-image-generator, Property 10: 不正データのエラー処理**
+ * **検証対象: 要件 3.3**
+ * 
+ * 任意の不正な形式の図式データに対して、デコード処理はエラーを返すべきである
+ */
+describe('Property 10: 不正データのエラー処理', () => {
+  // 不正なBase64データのジェネレーター
+  const invalidBase64Arb = fc.oneof(
+    // 有効なJSONだが不正なQuiverフォーマット
+    // 配列ではない
+    fc.record({ nodes: fc.array(fc.anything()), edges: fc.array(fc.anything()) })
+      .map(obj => Buffer.from(JSON.stringify(obj), 'utf-8').toString('base64')),
+    // 配列だが要素数が不足
+    fc.constant([]).map(arr => Buffer.from(JSON.stringify(arr), 'utf-8').toString('base64')),
+    fc.constant([0]).map(arr => Buffer.from(JSON.stringify(arr), 'utf-8').toString('base64')),
+    // nodeCountが数値でない
+    fc.tuple(fc.integer(), fc.string())
+      .map(arr => Buffer.from(JSON.stringify(arr), 'utf-8').toString('base64')),
+    // ノードデータが配列でない
+    fc.tuple(fc.constant(0), fc.constant(1), fc.string())
+      .map(arr => Buffer.from(JSON.stringify(arr), 'utf-8').toString('base64')),
+    // ノードの座標が数値でない
+    fc.tuple(fc.constant(0), fc.constant(1), fc.tuple(fc.string(), fc.integer(), fc.string()))
+      .map(arr => Buffer.from(JSON.stringify(arr), 'utf-8').toString('base64')),
+    // エッジのsource/targetが数値でない
+    fc.tuple(
+      fc.constant(0),
+      fc.constant(2),
+      fc.tuple(fc.constant(0), fc.constant(0), fc.constant('A')),
+      fc.tuple(fc.constant(1), fc.constant(0), fc.constant('B')),
+      fc.tuple(fc.string(), fc.integer())
+    ).map(arr => Buffer.from(JSON.stringify(arr), 'utf-8').toString('base64'))
+  );
+
+  it('任意の不正なデータに対してエラーをスローする', () => {
+    fc.assert(
+      fc.property(invalidBase64Arb, (invalidData: string) => {
+        // 不正なデータをデコードしようとするとエラーがスローされるべき
+        expect(() => decodeQuiverData(invalidData)).toThrow();
+      }),
+      { numRuns: 100 } // 100回の反復を実行
+    );
+  });
+});
