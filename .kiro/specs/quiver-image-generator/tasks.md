@@ -103,7 +103,7 @@
   - **Property 8: slug抽出の成功**
   - **検証対象: 要件 2.2**
 
-- [ ]* 5.6 image-descriptionの一意性プロパティテスト
+- [x] 5.6 image-descriptionの一意性プロパティテスト
   - **Property 9: image-descriptionの一意性**
   - **検証対象: 要件 2.4**
 

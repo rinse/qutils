@@ -606,4 +606,90 @@ describe('Property-Based Tests', () => {
       { numRuns: 100 }
     );
   });
+
+  /**
+   * **Feature: quiver-image-generator, Property 9: image-descriptionの一意性**
+   * **Validates: Requirements 2.4**
+   * 
+   * 任意の同じslugを持つ複数の異なる図式データに対して、
+   * 生成されるすべてのimage-descriptionは互いに異なるべきである
+   */
+  it('Property 9: image-descriptionの一意性 - 異なる図式データは異なるファイル名を生成', () => {
+    // 図式データのジェネレーター
+    const diagramDataArbitrary = fc.record({
+      nodes: fc.array(
+        fc.record({
+          id: fc.integer({ min: 0, max: 100 }),
+          x: fc.integer({ min: -1000, max: 1000 }),
+          y: fc.integer({ min: -1000, max: 1000 }),
+          label: fc.string({ maxLength: 50 })
+        }),
+        { minLength: 1, maxLength: 10 }
+      ),
+      edges: fc.array(
+        fc.record({
+          id: fc.integer({ min: 0, max: 100 }),
+          source: fc.integer({ min: 0, max: 100 }),
+          target: fc.integer({ min: 0, max: 100 }),
+          label: fc.option(fc.string({ maxLength: 30 })),
+          style: fc.option(fc.record({
+            bodyName: fc.option(fc.string({ maxLength: 20 })),
+            headName: fc.option(fc.string({ maxLength: 20 })),
+            offset: fc.option(fc.integer({ min: -100, max: 100 }))
+          }))
+        }),
+        { maxLength: 15 }
+      )
+    }) as fc.Arbitrary<DiagramData>;
+
+    // 同じslugで複数の異なる図式データを生成
+    fc.assert(
+      fc.property(
+        fc.stringMatching(/^[a-zA-Z0-9_-]{1,30}$/), // slug
+        fc.array(diagramDataArbitrary, { minLength: 2, maxLength: 20 }) // 複数の図式データ
+          .filter((diagrams) => {
+            // すべての図式データが異なることを保証
+            // JSON文字列化して比較
+            const serialized = diagrams.map(d => JSON.stringify(d));
+            const uniqueSet = new Set(serialized);
+            return uniqueSet.size === diagrams.length;
+          }),
+        (slug, diagrams) => {
+          // 各図式データからファイル名を生成
+          const filenames = diagrams.map(data => generateImageFileName(slug, data));
+
+          // プロパティ1: すべてのファイル名が一意であるべき
+          const uniqueFilenames = new Set(filenames);
+          expect(uniqueFilenames.size).toBe(filenames.length);
+
+          // プロパティ2: すべてのファイル名が正しい形式であるべき
+          // 形式: {slug}-diagram-{8文字の16進数}.svg
+          const regex = new RegExp(`^${slug}-diagram-[a-f0-9]{8}\\.svg$`);
+          filenames.forEach(filename => {
+            expect(filename).toMatch(regex);
+          });
+
+          // プロパティ3: 同じslugを使用しているべき
+          filenames.forEach(filename => {
+            expect(filename.startsWith(`${slug}-diagram-`)).toBe(true);
+          });
+
+          // プロパティ4: image-description部分（ハッシュ）が異なるべき
+          // ファイル名から image-description を抽出
+          const imageDescriptions = filenames.map(filename => {
+            const match = filename.match(/-diagram-([a-f0-9]{8})\.svg$/);
+            return match ? match[1] : null;
+          });
+
+          // すべてのimage-descriptionが抽出できたことを確認
+          expect(imageDescriptions.every(desc => desc !== null)).toBe(true);
+
+          // すべてのimage-descriptionが一意であることを確認
+          const uniqueDescriptions = new Set(imageDescriptions);
+          expect(uniqueDescriptions.size).toBe(imageDescriptions.length);
+        }
+      ),
+      { numRuns: 100 } // 最低100回の反復を実行
+    );
+  });
 });
