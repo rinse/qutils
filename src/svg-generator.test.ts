@@ -16,17 +16,18 @@ describe('SVG Generator', () => {
     it('should generate SVG from browser strategy config', async () => {
       // 簡単なQuiverの図式URL（2つのノードと1つのエッジ）
       const testUrl = 'https://q.uiver.app/#q=WzAsMyxbMCwwLCJBIl0sWzEsMCwiQiJdLFswLDEsImYiXV0=';
-      
+
       const config: SvgGenerationConfig = {
         strategy: 'browser',
         input: testUrl
       };
 
       const svg = await generateSvg(config);
-      
+
       // SVGが生成されたことを確認
       expect(svg).toBeDefined();
       expect(svg).toContain('<svg');
+      expect(svg).toContain('<rect width="100%" height="100%" fill="white"/>');
       expect(svg).toContain('</svg>');
     }, 60000); // タイムアウトを60秒に設定（ブラウザ起動に時間がかかる）
   });
@@ -35,9 +36,9 @@ describe('SVG Generator', () => {
     it('should extract SVG from Quiver page', async () => {
       // 簡単なQuiverの図式URL
       const testUrl = 'https://q.uiver.app/#q=WzAsMyxbMCwwLCJBIl0sWzEsMCwiQiJdLFswLDEsImYiXV0=';
-      
+
       const svg = await generateSvgFromBrowser(testUrl);
-      
+
       // SVGの基本的な構造を確認
       expect(svg).toBeDefined();
       expect(svg).toContain('<svg');
@@ -47,7 +48,7 @@ describe('SVG Generator', () => {
 
     it('should throw error for invalid URL', async () => {
       const invalidUrl = 'https://invalid-url.com';
-      
+
       await expect(generateSvgFromBrowser(invalidUrl)).rejects.toMatchObject({
         type: 'svg-generation-error'
       });

@@ -115,6 +115,7 @@ const extractSvgFromPage = async (page: Page): Promise<string> => {
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
      width="${Math.ceil(clip.width)}" height="${Math.ceil(clip.height)}" 
      viewBox="0 0 ${Math.ceil(clip.width)} ${Math.ceil(clip.height)}">
+  <rect width="100%" height="100%" fill="white"/>
   <image width="${Math.ceil(clip.width)}" height="${Math.ceil(clip.height)}" 
          xlink:href="data:image/png;base64,${screenshot}"/>
 </svg>`;
