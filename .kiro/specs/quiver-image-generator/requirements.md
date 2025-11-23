@@ -14,6 +14,7 @@ Qutilsは、Quiver（可換図式作成ツール）で作成した図式を、Ze
 - **マークダウンファイル**: Zennの記事を記述するためのテキストファイル
 - **QuiverのURL**: `https://q.uiver.app/#q=...`の形式を持つURL
 - **SVG**: Scalable Vector Graphics、ベクター形式の画像フォーマット
+- **PNG**: Portable Network Graphics、ラスター形式の画像フォーマット
 - **マークダウンリンク形式**: 画像をクリック可能なリンクとして表示するマークダウン構文（`[![代替テキスト](画像パス)](リンク先URL)`）。Qutilsが処理済みのURLや、手動で作成された画像リンクがこの形式を取る
 - **外部URL**: HTTPまたはHTTPSで始まる絶対URL（例: `https://storage.googleapis.com/zenn-user-upload/...`）。手動でアップロードされた画像を指す。主にZennの画像アップローダー（`https://storage.googleapis.com/zenn-user-upload/`）を通じてアップロードされた画像を想定しているが、任意の外部ホスティングサービスのURLも含む
 - **ローカルパス**: 相対パスまたは絶対パス形式のファイルパス（例: `./images/diagram.svg`、`/images/diagram.svg`）。Qutilsが生成した画像を指す

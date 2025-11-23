@@ -222,9 +222,9 @@ function generateSvgFromTex(data: DiagramData): Promise<string>;
 ### 4. ファイル操作関数
 
 ```typescript
-// SVGをファイルに保存
+// PNGをファイルに保存
 // 保存に失敗した場合はFileIoErrorをスロー
-function saveSvgToFile(svg: string, filePath: string): Promise<void>;
+function savePngToFile(png: Buffer, filePath: string): Promise<void>;
 
 // ファイル名を生成（一意な識別子を含む）
 function generateImageFileName(slug: string, data: DiagramData): string;
@@ -322,8 +322,8 @@ project-root/
 ├── articles/
 │   └── my-article.md
 └── images/
-    └── my-article-diagram-001.svg
-    └── my-article-diagram-002.svg
+    ├── article-article-slug1-image-title.png
+    └── book-book-slug1-page-slug1-image-title.png
 ```
 
 

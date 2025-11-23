@@ -25,26 +25,39 @@ Qutilsは、VSCodeでマークダウンファイルを保存する際に、フ�
 
 ### インストール手順
 
-1. **拡張機能のインストール**
+1. **リポジトリのクローンと依存関係のインストール**
    ```bash
-   # リポジトリをクローン
    git clone https://github.com/yourusername/qutils.git
    cd qutils
-   
-   # 依存関係をインストール
    npm install
-   
-   # 拡張機能をビルド
-   npm run compile
    ```
 
-2. **VSCodeに拡張機能をインストール**
+2. **VSIXファイルの生成**
+   ```bash
+   npm run build
+   ```
+   
+   このコマンドは以下を実行します：
+   - TypeScriptのコンパイル（`npm run compile`）
+   - VSIXパッケージの生成（`npm run package`）
+   
+   生成されたファイル：`qutils-0.1.0.vsix`
+
+3. **VSCodeへのインストール**
+   
+   **方法A: コマンドラインから**
+   ```bash
+   code --install-extension qutils-0.1.0.vsix
+   ```
+   
+   **方法B: VSCode UIから**
    - VSCodeで `F1` を押してコマンドパレットを開く
    - `Extensions: Install from VSIX...` を選択
-   - ビルドされた `.vsix` ファイルを選択
+   - 生成された `qutils-0.1.0.vsix` ファイルを選択
 
-3. **拡張機能の有効化**
-   - マークダウンファイルを開くと自動的に有効化されます
+4. **VSCodeの再起動**
+   - VSCodeを再起動すると拡張機能が有効化されます
+   - マークダウンファイルを開くと自動的に動作します
 
 ## 使い方
 
@@ -181,6 +194,9 @@ npm test
 
 # リントを実行
 npm run lint
+
+# VSIXファイルを生成（配布用）
+npm run build
 ```
 
 ### テストの実行
