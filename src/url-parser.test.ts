@@ -5,6 +5,7 @@
 import { describe, it, expect } from 'vitest';
 import { parseQuiverUrl, extractQuiverUrls, isUrlReplaced } from './url-parser';
 import type { QuiverUrl } from './types';
+import * as fc from 'fast-check';
 
 describe('parseQuiverUrl', () => {
   it('有効なQuiverのURLを正しく解析できる', () => {
@@ -189,5 +190,87 @@ describe('isUrlReplaced', () => {
     const result = isUrlReplaced(content, url);
     
     expect(result).toBe(false);
+  });
+});
+
+/**
+ * プロパティベーステスト
+ * fast-checkを使用して、様々な入力に対する正確性を検証
+ */
+describe('Property-Based Tests', () => {
+  /**
+   * **Feature: quiver-image-generator, Property 1: URL検出の完全性**
+   * **Validates: Requirements 1.1**
+   * 
+   * 任意のマークダウンコンテンツに対して、ファイル内のすべてのQuiverのURL
+   * （`https://q.uiver.app/#q=...`の形式）が検出されるべきである
+   */
+  it('Property 1: URL検出の完全性 - すべてのQuiverのURLが検出される', () => {
+    // Base64文字列のジェネレーター（URL-safe Base64）
+    const base64Arbitrary = fc.stringMatching(/^[A-Za-z0-9_-]{1,100}={0,2}$/);
+    
+    // QuiverのURLジェネレーター
+    const quiverUrlArbitrary = base64Arbitrary.map(
+      (encodedData) => `https://q.uiver.app/#q=${encodedData}`
+    );
+    
+    // マークダウンのテキスト断片ジェネレーター
+    // QuiverのURLを含まず、Base64文字で終わらないようにする
+    // （URLの直後にBase64文字が来ると、URLが拡張されてしまうため）
+    const markdownFragmentArbitrary = fc.string().filter(
+      (s) => !s.includes('https://q.uiver.app/#q=')
+    ).map((s) => {
+      // フラグメントがBase64文字で終わる場合、空白を追加してURLと区切る
+      if (s.length > 0 && /[A-Za-z0-9_=-]$/.test(s)) {
+        return s + ' ';
+      }
+      return s;
+    });
+    
+    // テスト: 複数のQuiverのURLをランダムなマークダウンに埋め込む
+    fc.assert(
+      fc.property(
+        fc.array(quiverUrlArbitrary, { minLength: 0, maxLength: 10 }),
+        fc.array(markdownFragmentArbitrary, { minLength: 1, maxLength: 11 }),
+        (urls, fragments) => {
+          // URLとフラグメントを交互に配置してマークダウンを構築
+          // fragments[0] + urls[0] + ' ' + fragments[1] + urls[1] + ' ' + ... + fragments[n]
+          let content = '';
+          const expectedUrls: string[] = [];
+          
+          for (let i = 0; i < urls.length; i++) {
+            content += fragments[i] || '';
+            content += urls[i];
+            expectedUrls.push(urls[i]);
+            // URLの後に空白を追加して、次のフラグメントと区切る
+            content += ' ';
+          }
+          // 最後のフラグメントを追加
+          if (fragments.length > urls.length) {
+            content += fragments[fragments.length - 1];
+          }
+          
+          // URLを抽出
+          const result = extractQuiverUrls(content);
+          
+          // すべてのURLが検出されることを確認
+          expect(result.length).toBe(expectedUrls.length);
+          
+          // 検出されたURLが期待されるURLと一致することを確認
+          const detectedUrls = result.map((qu) => qu.url);
+          expect(detectedUrls).toEqual(expectedUrls);
+          
+          // 各URLの位置情報が正確であることを確認
+          result.forEach((quiverUrl) => {
+            const extractedUrl = content.substring(
+              quiverUrl.position.start,
+              quiverUrl.position.end
+            );
+            expect(extractedUrl).toBe(quiverUrl.url);
+          });
+        }
+      ),
+      { numRuns: 100 } // 最低100回の反復を実行
+    );
   });
 });
