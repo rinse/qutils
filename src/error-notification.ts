@@ -24,8 +24,8 @@ export const formatErrorMessage = (error: QutilsError): string => {
     return `デコードエラー: ${error.message}\n` +
         `対処法: QuiverのURLが破損していないか確認してください。Quiverで図式を再度エクスポートしてみてください。`;
 
-  case 'svg-generation-error':
-    return `SVG生成エラー: ${error.message}\n` +
+  case 'image-generation-error':
+    return `画像生成エラー: ${error.message}\n` +
         `対処法: ブラウザが正しく起動できるか確認してください。ネットワーク接続を確認し、Quiverのサイト（q.uiver.app）にアクセスできることを確認してください。`;
 
   case 'file-io-error':
@@ -112,7 +112,7 @@ const isQutilsError = (error: unknown): error is QutilsError => {
   return (
     e.type === 'url-parse-error' ||
     e.type === 'decode-error' ||
-    e.type === 'svg-generation-error' ||
+    e.type === 'image-generation-error' ||
     e.type === 'file-io-error'
   );
 };

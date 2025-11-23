@@ -38,7 +38,7 @@ describe('formatErrorMessage', () => {
 
   it('SVG生成エラーのメッセージをフォーマットする', () => {
     const error: QutilsError = {
-      type: 'svg-generation-error',
+      type: 'image-generation-error',
       config: {
         strategy: 'browser',
         input: 'https://q.uiver.app/#q=test',
@@ -48,7 +48,7 @@ describe('formatErrorMessage', () => {
 
     const message = formatErrorMessage(error);
 
-    expect(message).toContain('SVG生成エラー');
+    expect(message).toContain('画像生成エラー');
     expect(message).toContain('Browser failed to start');
     expect(message).toContain('対処法');
   });
