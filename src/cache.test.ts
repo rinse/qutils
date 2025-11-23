@@ -376,4 +376,71 @@ describe('Property-Based Tests', () => {
       { numRuns: 100 } // 最低100回の反復を実行
     );
   });
+
+  /**
+   * **Feature: quiver-image-generator, Property 13: 同一URLのスキップ**
+   * **Validates: Requirements 5.2**
+   * 
+   * 任意のURLに対して、同じURLで2回処理を実行した場合、
+   * 2回目は画像生成をスキップするべきである
+   * 
+   * より具体的には、URLとencodedDataが同じ場合、hasUrlChangedはfalseを返し、
+   * キャッシュヒットが発生するべきである
+   */
+  it('Property 13: 同一URLのスキップ - 同じURLで2回処理した場合、2回目はスキップされる', () => {
+    // fast-checkをインポート
+    const fc = require('fast-check');
+    
+    // Base64文字列のジェネレーター（URL-safe Base64）
+    const base64Arbitrary = fc.stringMatching(/^[A-Za-z0-9_-]{1,100}={0,2}$/);
+    
+    // QuiverのURLジェネレーター
+    const quiverUrlArbitrary = base64Arbitrary.map(
+      (encodedData: string) => `https://q.uiver.app/#q=${encodedData}`
+    );
+    
+    // ファイルパスジェネレーター
+    const filePathArbitrary = fc.tuple(
+      fc.stringMatching(/^[a-z0-9-]{1,20}$/),
+      fc.stringMatching(/^[a-z0-9-]{1,20}$/),
+      fc.stringMatching(/^[a-z0-9-]{1,20}$/)
+    ).map(([slug, desc, ext]) => `/path/to/${slug}-${desc}.${ext}`);
+    
+    // タイムスタンプジェネレーター
+    const timestampArbitrary = fc.integer({ min: 0, max: Date.now() });
+    
+    // テスト: 同じURLとencodedDataで2回処理した場合、2回目はhasUrlChangedがfalseを返す
+    fc.assert(
+      fc.property(
+        quiverUrlArbitrary,
+        base64Arbitrary,
+        filePathArbitrary,
+        timestampArbitrary,
+        (url: string, encodedData: string, imagePath: string, timestamp: number) => {
+          // 1回目の処理: キャッシュにエントリを追加
+          const initialCache: ReadonlyArray<CacheEntry> = [];
+          const entry: CacheEntry = {
+            url,
+            encodedData,
+            imagePath,
+            timestamp,
+          };
+          const cacheAfterFirst = addCacheEntry(initialCache, entry);
+          
+          // 2回目の処理: 同じURLとencodedDataで確認
+          const urlChanged = hasUrlChanged(url, encodedData, cacheAfterFirst);
+          
+          // 2回目はURLが変更されていないと判定されるべき
+          expect(urlChanged).toBe(false);
+          
+          // キャッシュエントリも取得できるべき
+          const cachedEntry = getCacheEntry(url, cacheAfterFirst);
+          expect(cachedEntry).toBeDefined();
+          expect(cachedEntry?.url).toBe(url);
+          expect(cachedEntry?.encodedData).toBe(encodedData);
+        }
+      ),
+      { numRuns: 100 } // 最低100回の反復を実行
+    );
+  });
 });
