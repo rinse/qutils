@@ -82,14 +82,42 @@
 
 - [ ] 5. ファイル操作機能の実装
 - [x] 5.1 ファイル操作関数の実装
-  - `saveSvgToFile`関数を実装（SVGをファイルに保存）
-  - `generateImageFileName`関数を実装（一意なファイル名を生成）
+  - `savePngToFile`関数を実装（PNGをファイルに保存）
+  - `generateImageFileName`関数を実装（content-type、slug、image-titleに基づいてファイル名を生成）
+    * articlesディレクトリ: `article-{article-slug}-{image-title}.png`
+    * booksディレクトリ: `book-{book-slug}-{page-slug}-{image-title}.png`
+    * 同じファイル名が存在する場合は連番を追加
+  - `generateImageTitle`関数を実装（図式データからimage-titleを生成）
+  - `extractContentType`関数を実装（マークダウンファイルからcontent-typeを判定）
   - `extractSlug`関数を実装（マークダウンファイルからslugを抽出）
+    * articlesディレクトリ: ファイル名から取得
+    * booksディレクトリ: ディレクトリ名とファイル名を組み合わせて取得
   - `replaceUrlWithImageRef`関数を実装（マークダウン内のURLを画像参照に置き換え）
     * 画像をクリックするとQuiverのページに飛ぶようにリンクを追加
     * 形式: `[![diagram](imagePath)](quiverUrl)`
   - `fileExists`関数を実装（ファイルの存在確認）
-  - _要件: 1.4, 1.5, 2.1, 2.2_
+  - `listImageFiles`関数を実装（imagesディレクトリ内の既存ファイル一覧を取得）
+  - _要件: 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7_
+
+- [ ] 5.7 imagesディレクトリの位置と命名規則の更新
+  - `file-operations.ts`の`generateImageFileName`関数を更新
+    * content-typeとslugを引数として受け取るように変更
+    * articlesディレクトリ: `article-{article-slug}-{image-title}.png`
+    * booksディレクトリ: `book-{book-slug}-{page-slug}-{image-title}.png`
+  - `file-operations.ts`に`extractContentType`関数を実装
+    * マークダウンファイルのパスから`articles`または`books`を判定
+  - `file-operations.ts`の`extractSlug`関数を更新
+    * articlesディレクトリ: ファイル名から取得
+    * booksディレクトリ: `{book-slug}-{page-slug}`の形式で生成
+  - `process-url.ts`の`processMarkdownFile`関数を更新
+    * imagesディレクトリをプロジェクトルートに変更（`path.join(workspaceRoot, 'images')`）
+    * `processSingleUrl`の呼び出しにcontent-typeとslugを渡すように変更
+  - `process-url.ts`の`processSingleUrl`関数を更新
+    * content-typeとslugを引数として受け取るように変更
+    * `generateImageFileName`の呼び出しを新しいシグネチャに合わせて更新
+  - `extension.ts`を更新
+    * ワークスペースルートのパスを`processMarkdownFile`に渡すように変更
+  - _要件: 2.1, 2.2, 2.3, 2.4, 2.5_
 
 - [x] 5.2 ファイル保存の成功プロパティテスト
   - **Property 5: ファイル保存の成功**
@@ -101,15 +129,24 @@
 
 - [x] 5.4 ファイル名形式の遵守プロパティテスト
   - **Property 7: ファイル名形式の遵守**
-  - **検証対象: 要件 2.1**
+  - **検証対象: 要件 2.2**
 
 - [x] 5.5 slug抽出の成功プロパティテスト
   - **Property 8: slug抽出の成功**
-  - **検証対象: 要件 2.2**
-
-- [x] 5.6 image-descriptionの一意性プロパティテスト
-  - **Property 9: image-descriptionの一意性**
   - **検証対象: 要件 2.4**
+
+- [x] 5.6 ファイル名の一意性プロパティテスト
+  - **Property 9: ファイル名の一意性**
+  - **検証対象: 要件 2.7**
+
+- [ ]* 5.8 更新された命名規則のテスト
+  - `file-operations.test.ts`の既存テストを更新
+    * `generateImageFileName`のテストをcontent-typeとslugを含む新しい形式に対応
+    * `extractContentType`のテストを追加（articlesとbooksの判定）
+    * `extractSlug`のテストを更新（booksディレクトリの`{book-slug}-{page-slug}`形式に対応）
+  - `process-url.test.ts`の既存テストを更新
+    * プロジェクトルートのimagesディレクトリを使用するように変更
+  - _要件: 2.1, 2.2, 2.3, 2.4, 2.5_
 
 - [ ] 6. キャッシュ管理機能の実装
 - [x] 6.1 キャッシュ操作関数の実装

@@ -226,11 +226,27 @@ function generateSvgFromTex(data: DiagramData): Promise<string>;
 // 保存に失敗した場合はFileIoErrorをスロー
 function savePngToFile(png: Buffer, filePath: string): Promise<void>;
 
-// ファイル名を生成（一意な識別子を含む）
-function generateImageFileName(slug: string, data: DiagramData): string;
+// ファイル名を生成（content-type、slug、image-titleに基づく）
+// articlesディレクトリ: article-{article-slug}-{image-title}.png
+// booksディレクトリ: book-{book-slug}-{page-slug}-{image-title}.png
+// 同じファイル名が存在する場合は連番を追加
+function generateImageFileName(
+  markdownPath: string, 
+  data: DiagramData,
+  existingFiles: ReadonlyArray<string>
+): string;
+
+// 図式データからimage-titleを生成
+// 図式の内容を表す一意な識別子を生成
+function generateImageTitle(data: DiagramData): string;
+
+// マークダウンファイルからcontent-typeを判定
+// articlesディレクトリなら'article'、booksディレクトリなら'book'
+function extractContentType(markdownPath: string): 'article' | 'book';
 
 // マークダウンファイルからslugを抽出
-// ファイル名またはフロントマターのメタデータから取得
+// articlesディレクトリ: ファイル名から取得
+// booksディレクトリ: ディレクトリ名とファイル名を組み合わせて取得
 function extractSlug(markdownPath: string, content: string): string;
 
 // マークダウンコンテンツ内のURLを画像参照に置き換え
@@ -242,6 +258,9 @@ function replaceUrlWithImageRef(
 
 // ファイルが存在するか確認
 function fileExists(filePath: string): Promise<boolean>;
+
+// imagesディレクトリ内の既存ファイル一覧を取得
+function listImageFiles(): Promise<ReadonlyArray<string>>;
 ```
 
 ### 5. キャッシュ操作関数
@@ -315,16 +334,56 @@ Base64デコード後のJSONは以下の構造を持ちます：
 
 ### ファイル構造
 
-生成された画像は以下のディレクトリ構造で保存されます：
+#### Zennプロジェクトリポジトリの構造
+
+Zennのプロジェクトリポジトリは以下の構造を持ちます：
 
 ```
 project-root/
 ├── articles/
-│   └── my-article.md
+│   ├── article-slug1.md
+│   └── article-slug2.md
+├── books/
+│   ├── book-slug1/
+│   │   ├── config.yml
+│   │   ├── cover.png
+│   │   ├── page-slug1.md
+│   │   └── page-slug2.md
+│   └── book-slug2/
+│       ├── config.yml
+│       ├── cover.png
+│       └── page-slug1.md
 └── images/
     ├── article-article-slug1-image-title.png
     └── book-book-slug1-page-slug1-image-title.png
 ```
+
+**ディレクトリ構造の説明:**
+- `articles/`: 記事のマークダウンファイルを格納。ファイル名がarticle-slugとなる
+- `books/`: 本のディレクトリを格納。各本はディレクトリ名がbook-slugとなる
+  - `config.yml`: 本の設定ファイル
+  - `cover.png`: 本の表紙画像
+  - `page-slug.md`: 各ページのマークダウンファイル。ファイル名がpage-slugとなる
+- `images/`: 生成された画像を格納
+
+#### 生成される画像ファイルの構造
+
+Qutilsが生成する画像は以下の命名規則に従います：
+
+```
+images/
+├── article-{article-slug}-{image-title}.png
+└── book-{book-slug}-{page-slug}-{image-title}.png
+```
+
+**画像ファイル名の形式:**
+- articlesディレクトリの記事: `article-{article-slug}-{image-title}.png`
+- booksディレクトリのページ: `book-{book-slug}-{page-slug}-{image-title}.png`
+- 同じslugとimage-titleで複数の画像がある場合: 連番を追加（例: `article-my-article-diagram1-2.png`）
+
+**例:**
+- `articles/my-first-article.md` → `images/article-my-first-article-diagram1.png`
+- `books/category-theory/chapter1.md` → `images/book-category-theory-chapter1-diagram1.png`
 
 
 ## 正確性プロパティ
@@ -363,18 +422,20 @@ project-root/
 
 ### プロパティ7: ファイル名形式の遵守
 
-*任意の*slugと図式データに対して、生成されるファイル名は`{slug}-{image-description}.svg`の形式に一致するべきである
-**検証対象: 要件 2.1**
+*任意の*マークダウンファイルパスと図式データに対して、生成されるファイル名は以下の形式に一致するべきである：
+- articlesディレクトリ: `article-{article-slug}-{image-title}.png`
+- booksディレクトリ: `book-{book-slug}-{page-slug}-{image-title}.png`
+**検証対象: 要件 2.2**
 
 ### プロパティ8: slug抽出の成功
 
 *任意の*マークダウンファイルパスまたはメタデータに対して、有効なslugが抽出されるべきである
-**検証対象: 要件 2.2**
-
-### プロパティ9: image-descriptionの一意性
-
-*任意の*同じslugを持つ複数の異なる図式データに対して、生成されるすべてのimage-descriptionは互いに異なるべきである
 **検証対象: 要件 2.4**
+
+### プロパティ9: ファイル名の一意性
+
+*任意の*同じslugを持つ複数の画像に対して、生成されるすべてのファイル名は互いに異なるべきである（image-titleと連番により一意性を確保）
+**検証対象: 要件 2.7**
 
 ### プロパティ10: 不正データのエラー処理
 

@@ -15,6 +15,11 @@ Qutilsは、Quiver（可換図式作成ツール）で作成した図式を、Ze
 - **QuiverのURL**: `https://q.uiver.app/#q=...`の形式を持つURL
 - **SVG**: Scalable Vector Graphics、ベクター形式の画像フォーマット
 - **PNG**: Portable Network Graphics、ラスター形式の画像フォーマット
+- **content-type**: 記事の種類を示す識別子（`article`または`book`）
+- **article-slug**: articlesディレクトリ内の記事のファイル名から取得されるスラグ
+- **book-slug**: booksディレクトリ内の本のディレクトリ名から取得されるスラグ
+- **page-slug**: booksディレクトリ内のページのファイル名から取得されるスラグ
+- **image-title**: 図式の内容を表す一意な識別子
 - **マークダウンリンク形式**: 画像をクリック可能なリンクとして表示するマークダウン構文（`[![代替テキスト](画像パス)](リンク先URL)`）。Qutilsが処理済みのURLや、手動で作成された画像リンクがこの形式を取る
 - **外部URL**: HTTPまたはHTTPSで始まる絶対URL（例: `https://storage.googleapis.com/zenn-user-upload/...`）。手動でアップロードされた画像を指す。主にZennの画像アップローダー（`https://storage.googleapis.com/zenn-user-upload/`）を通じてアップロードされた画像を想定しているが、任意の外部ホスティングサービスのURLも含む
 - **ローカルパス**: 相対パスまたは絶対パス形式のファイルパス（例: `./images/diagram.svg`、`/images/diagram.svg`）。Qutilsが生成した画像を指す
@@ -39,10 +44,13 @@ Qutilsは、Quiver（可換図式作成ツール）で作成した図式を、Ze
 
 #### 受入基準
 
-1. WHEN 画像ファイルが生成される THEN Qutils SHALL ファイル名を`{slug}-{image-description}.svg`の形式で命名する
-2. WHEN slugが決定される THEN Qutils SHALL マークダウンファイル名またはメタデータからslugを取得する
-3. WHEN image-descriptionが決定される THEN Qutils SHALL 図式の内容を表す一意な識別子を生成する
-4. WHEN 同じslugで複数の画像が生成される THEN Qutils SHALL 各画像に一意なimage-descriptionを割り当てる
+1. WHEN 画像ファイルが生成される THEN Qutils SHALL プロジェクトルートのimagesフォルダに画像を保存する
+2. WHEN 画像ファイルが生成される THEN Qutils SHALL ファイル名を`{content-type}-{slug}-{image-title}.png`の形式で命名する
+3. WHEN content-typeが決定される THEN Qutils SHALL マークダウンファイルのディレクトリ名（articlesまたはbooks）からcontent-typeを判定する
+4. WHEN slugが決定される THEN Qutils SHALL マークダウンファイル名またはメタデータからslugを取得する
+5. WHEN booksディレクトリ内のファイルが処理される THEN Qutils SHALL slugを`{book-slug}-{page-slug}`の形式で生成する
+6. WHEN image-titleが決定される THEN Qutils SHALL 図式の内容を表す一意な識別子を生成する
+7. WHEN 同じslugとimage-titleで複数の画像が生成される THEN Qutils SHALL ファイル名に連番を追加して一意性を確保する
 
 ### 要件3
 
