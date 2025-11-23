@@ -199,6 +199,41 @@ describe('isUrlReplaced', () => {
  */
 describe('Property-Based Tests', () => {
   /**
+   * **Feature: quiver-image-generator, Property 2: データ抽出の成功**
+   * **Validates: Requirements 1.2, 3.1**
+   * 
+   * 任意の有効なQuiverのURLに対して、URLのフラグメント部分から
+   * Base64エンコードされたデータが正しく抽出されるべきである
+   */
+  it('Property 2: データ抽出の成功 - Base64データが正しく抽出される', () => {
+    // Base64文字列のジェネレーター（URL-safe Base64）
+    // Base64は [A-Za-z0-9+/] と末尾のパディング = で構成される
+    // URL-safe Base64は [A-Za-z0-9_-] と末尾のパディング = で構成される
+    const base64Arbitrary = fc.stringMatching(/^[A-Za-z0-9_-]{1,200}={0,2}$/);
+    
+    fc.assert(
+      fc.property(
+        base64Arbitrary,
+        fc.integer({ min: 0, max: 1000 }),
+        (encodedData, startPos) => {
+          // QuiverのURLを構築
+          const url = `https://q.uiver.app/#q=${encodedData}`;
+          const position = { start: startPos, end: startPos + url.length };
+          
+          // URLを解析
+          const result = parseQuiverUrl(url, position);
+          
+          // エンコードされたデータが正しく抽出されることを確認
+          expect(result.encodedData).toBe(encodedData);
+          expect(result.url).toBe(url);
+          expect(result.position).toEqual(position);
+        }
+      ),
+      { numRuns: 100 } // 最低100回の反復を実行
+    );
+  });
+
+  /**
    * **Feature: quiver-image-generator, Property 1: URL検出の完全性**
    * **Validates: Requirements 1.1**
    * 
