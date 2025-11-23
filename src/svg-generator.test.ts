@@ -2,7 +2,7 @@
  * SVG生成機能のテスト
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, afterAll } from 'vitest';
 import { generateSvg, generateSvgFromBrowser, closeBrowser } from './svg-generator';
 import type { SvgGenerationConfig } from './types';
 
@@ -19,7 +19,7 @@ describe('SVG Generator', () => {
 
       const config: SvgGenerationConfig = {
         strategy: 'browser',
-        input: testUrl
+        input: testUrl,
       };
 
       const svg = await generateSvg(config);
@@ -50,7 +50,7 @@ describe('SVG Generator', () => {
       const invalidUrl = 'https://invalid-url.com';
 
       await expect(generateSvgFromBrowser(invalidUrl)).rejects.toMatchObject({
-        type: 'svg-generation-error'
+        type: 'svg-generation-error',
       });
     }, 60000);
   });

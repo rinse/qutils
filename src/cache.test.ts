@@ -163,7 +163,7 @@ describe('hasUrlChanged', () => {
     const result = hasUrlChanged(
       'https://q.uiver.app/#q=def',
       'def',
-      cache
+      cache,
     );
 
     expect(result).toBe(true);
@@ -182,7 +182,7 @@ describe('hasUrlChanged', () => {
     const result = hasUrlChanged(
       'https://q.uiver.app/#q=abc',
       'abc',
-      cache
+      cache,
     );
 
     expect(result).toBe(false);
@@ -201,7 +201,7 @@ describe('hasUrlChanged', () => {
     const result = hasUrlChanged(
       'https://q.uiver.app/#q=abc',
       'xyz',
-      cache
+      cache,
     );
 
     expect(result).toBe(true);
@@ -213,7 +213,7 @@ describe('hasUrlChanged', () => {
     const result = hasUrlChanged(
       'https://q.uiver.app/#q=abc',
       'abc',
-      cache
+      cache,
     );
 
     expect(result).toBe(true);
@@ -304,48 +304,48 @@ describe('Property-Based Tests', () => {
   /**
    * **Feature: quiver-image-generator, Property 12: キャッシュヒットの検出**
    * **Validates: Requirements 5.1**
-   * 
+   *
    * 任意のURLに対して、対応する画像ファイルが存在する場合、
    * 存在確認は真を返すべきである
-   * 
+   *
    * より具体的には、キャッシュにURLが存在する場合、getCacheEntryは
    * 対応するエントリを返すべきである
    */
   it('Property 12: キャッシュヒットの検出 - キャッシュに存在するURLは検出される', () => {
     // fast-checkをインポート
     const fc = require('fast-check');
-    
+
     // Base64文字列のジェネレーター（URL-safe Base64）
     const base64Arbitrary = fc.stringMatching(/^[A-Za-z0-9_-]{1,100}={0,2}$/);
-    
+
     // QuiverのURLジェネレーター
     const quiverUrlArbitrary = base64Arbitrary.map(
-      (encodedData: string) => `https://q.uiver.app/#q=${encodedData}`
+      (encodedData: string) => `https://q.uiver.app/#q=${encodedData}`,
     );
-    
+
     // ファイルパスジェネレーター
     const filePathArbitrary = fc.tuple(
       fc.stringMatching(/^[a-z0-9-]{1,20}$/),
       fc.stringMatching(/^[a-z0-9-]{1,20}$/),
-      fc.stringMatching(/^[a-z0-9-]{1,20}$/)
+      fc.stringMatching(/^[a-z0-9-]{1,20}$/),
     ).map(([slug, desc, ext]) => `/path/to/${slug}-${desc}.${ext}`);
-    
+
     // タイムスタンプジェネレーター
     const timestampArbitrary = fc.integer({ min: 0, max: Date.now() });
-    
+
     // CacheEntryジェネレーター
     const cacheEntryArbitrary = fc.tuple(
       quiverUrlArbitrary,
       base64Arbitrary,
       filePathArbitrary,
-      timestampArbitrary
+      timestampArbitrary,
     ).map(([url, encodedData, imagePath, timestamp]) => ({
       url,
       encodedData,
       imagePath,
       timestamp,
     }));
-    
+
     // テスト: キャッシュに追加したエントリは必ず取得できる
     fc.assert(
       fc.property(
@@ -355,60 +355,60 @@ describe('Property-Based Tests', () => {
           // インデックスを配列の範囲内に調整
           const actualIndex = targetIndex % entries.length;
           const targetEntry = entries[actualIndex];
-          
+
           // キャッシュを構築
           let cache: ReadonlyArray<CacheEntry> = [];
           for (const entry of entries) {
             cache = addCacheEntry(cache, entry);
           }
-          
+
           // ターゲットURLでキャッシュエントリを取得
           const result = getCacheEntry(targetEntry.url, cache);
-          
+
           // エントリが見つかることを確認
           expect(result).toBeDefined();
           expect(result?.url).toBe(targetEntry.url);
           expect(result?.encodedData).toBe(targetEntry.encodedData);
           expect(result?.imagePath).toBe(targetEntry.imagePath);
           expect(result?.timestamp).toBe(targetEntry.timestamp);
-        }
+        },
       ),
-      { numRuns: 100 } // 最低100回の反復を実行
+      { numRuns: 100 }, // 最低100回の反復を実行
     );
   });
 
   /**
    * **Feature: quiver-image-generator, Property 13: 同一URLのスキップ**
    * **Validates: Requirements 5.2**
-   * 
+   *
    * 任意のURLに対して、同じURLで2回処理を実行した場合、
    * 2回目は画像生成をスキップするべきである
-   * 
+   *
    * より具体的には、URLとencodedDataが同じ場合、hasUrlChangedはfalseを返し、
    * キャッシュヒットが発生するべきである
    */
   it('Property 13: 同一URLのスキップ - 同じURLで2回処理した場合、2回目はスキップされる', () => {
     // fast-checkをインポート
     const fc = require('fast-check');
-    
+
     // Base64文字列のジェネレーター（URL-safe Base64）
     const base64Arbitrary = fc.stringMatching(/^[A-Za-z0-9_-]{1,100}={0,2}$/);
-    
+
     // QuiverのURLジェネレーター
     const quiverUrlArbitrary = base64Arbitrary.map(
-      (encodedData: string) => `https://q.uiver.app/#q=${encodedData}`
+      (encodedData: string) => `https://q.uiver.app/#q=${encodedData}`,
     );
-    
+
     // ファイルパスジェネレーター
     const filePathArbitrary = fc.tuple(
       fc.stringMatching(/^[a-z0-9-]{1,20}$/),
       fc.stringMatching(/^[a-z0-9-]{1,20}$/),
-      fc.stringMatching(/^[a-z0-9-]{1,20}$/)
+      fc.stringMatching(/^[a-z0-9-]{1,20}$/),
     ).map(([slug, desc, ext]) => `/path/to/${slug}-${desc}.${ext}`);
-    
+
     // タイムスタンプジェネレーター
     const timestampArbitrary = fc.integer({ min: 0, max: Date.now() });
-    
+
     // テスト: 同じURLとencodedDataで2回処理した場合、2回目はhasUrlChangedがfalseを返す
     fc.assert(
       fc.property(
@@ -426,56 +426,56 @@ describe('Property-Based Tests', () => {
             timestamp,
           };
           const cacheAfterFirst = addCacheEntry(initialCache, entry);
-          
+
           // 2回目の処理: 同じURLとencodedDataで確認
           const urlChanged = hasUrlChanged(url, encodedData, cacheAfterFirst);
-          
+
           // 2回目はURLが変更されていないと判定されるべき
           expect(urlChanged).toBe(false);
-          
+
           // キャッシュエントリも取得できるべき
           const cachedEntry = getCacheEntry(url, cacheAfterFirst);
           expect(cachedEntry).toBeDefined();
           expect(cachedEntry?.url).toBe(url);
           expect(cachedEntry?.encodedData).toBe(encodedData);
-        }
+        },
       ),
-      { numRuns: 100 } // 最低100回の反復を実行
+      { numRuns: 100 }, // 最低100回の反復を実行
     );
   });
 
   /**
    * **Feature: quiver-image-generator, Property 14: URL変更時の再生成**
    * **Validates: Requirements 5.3**
-   * 
+   *
    * 任意のURLに対して、URLのデータ部分が変更された場合、
    * 画像は再生成されるべきである
-   * 
+   *
    * より具体的には、URLは同じでもencodedDataが変更された場合、
    * hasUrlChangedはtrueを返し、画像の再生成が必要であることを示すべきである
    */
   it('Property 14: URL変更時の再生成 - URLのデータ部分が変更された場合、再生成が必要', () => {
     // fast-checkをインポート
     const fc = require('fast-check');
-    
+
     // Base64文字列のジェネレーター（URL-safe Base64）
     const base64Arbitrary = fc.stringMatching(/^[A-Za-z0-9_-]{1,100}={0,2}$/);
-    
+
     // QuiverのURLジェネレーター
     const quiverUrlArbitrary = base64Arbitrary.map(
-      (encodedData: string) => `https://q.uiver.app/#q=${encodedData}`
+      (encodedData: string) => `https://q.uiver.app/#q=${encodedData}`,
     );
-    
+
     // ファイルパスジェネレーター
     const filePathArbitrary = fc.tuple(
       fc.stringMatching(/^[a-z0-9-]{1,20}$/),
       fc.stringMatching(/^[a-z0-9-]{1,20}$/),
-      fc.stringMatching(/^[a-z0-9-]{1,20}$/)
+      fc.stringMatching(/^[a-z0-9-]{1,20}$/),
     ).map(([slug, desc, ext]) => `/path/to/${slug}-${desc}.${ext}`);
-    
+
     // タイムスタンプジェネレーター
     const timestampArbitrary = fc.integer({ min: 0, max: Date.now() });
-    
+
     // テスト: URLは同じでもencodedDataが変更された場合、hasUrlChangedがtrueを返す
     fc.assert(
       fc.property(
@@ -487,7 +487,7 @@ describe('Property-Based Tests', () => {
         (url: string, originalData: string, newData: string, imagePath: string, timestamp: number) => {
           // 異なるencodedDataを保証するためのフィルター
           fc.pre(originalData !== newData);
-          
+
           // 1回目の処理: 元のデータでキャッシュにエントリを追加
           const initialCache: ReadonlyArray<CacheEntry> = [];
           const entry: CacheEntry = {
@@ -497,22 +497,22 @@ describe('Property-Based Tests', () => {
             timestamp,
           };
           const cacheAfterFirst = addCacheEntry(initialCache, entry);
-          
+
           // 2回目の処理: 同じURLだが異なるencodedDataで確認
           const urlChanged = hasUrlChanged(url, newData, cacheAfterFirst);
-          
+
           // URLのデータ部分が変更されたので、trueを返すべき
           expect(urlChanged).toBe(true);
-          
+
           // キャッシュエントリは存在するが、encodedDataが異なる
           const cachedEntry = getCacheEntry(url, cacheAfterFirst);
           expect(cachedEntry).toBeDefined();
           expect(cachedEntry?.url).toBe(url);
           expect(cachedEntry?.encodedData).toBe(originalData);
           expect(cachedEntry?.encodedData).not.toBe(newData);
-        }
+        },
       ),
-      { numRuns: 100 } // 最低100回の反復を実行
+      { numRuns: 100 }, // 最低100回の反復を実行
     );
   });
 });

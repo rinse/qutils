@@ -12,7 +12,7 @@ import {
   generateImageFileName,
   extractSlug,
   replaceUrlWithImageRef,
-  fileExists
+  fileExists,
 } from './file-operations';
 import type { DiagramData, QuiverUrl } from './types';
 
@@ -61,7 +61,7 @@ describe('file-operations', () => {
 
       await expect(saveSvgToFile(svg, filePath)).rejects.toMatchObject({
         type: 'file-io-error',
-        path: filePath
+        path: filePath,
       });
     });
   });
@@ -72,11 +72,11 @@ describe('file-operations', () => {
       const data: DiagramData = {
         nodes: [
           { id: 0, x: 0, y: 0, label: 'A' },
-          { id: 1, x: 100, y: 0, label: 'B' }
+          { id: 1, x: 100, y: 0, label: 'B' },
         ],
         edges: [
-          { id: 0, source: 0, target: 1, label: 'f' }
-        ]
+          { id: 0, source: 0, target: 1, label: 'f' },
+        ],
       };
 
       const filename = generateImageFileName(slug, data);
@@ -88,7 +88,7 @@ describe('file-operations', () => {
       const slug = 'article';
       const data: DiagramData = {
         nodes: [{ id: 0, x: 0, y: 0, label: 'X' }],
-        edges: []
+        edges: [],
       };
 
       const filename1 = generateImageFileName(slug, data);
@@ -101,11 +101,11 @@ describe('file-operations', () => {
       const slug = 'article';
       const data1: DiagramData = {
         nodes: [{ id: 0, x: 0, y: 0, label: 'A' }],
-        edges: []
+        edges: [],
       };
       const data2: DiagramData = {
         nodes: [{ id: 0, x: 0, y: 0, label: 'B' }],
-        edges: []
+        edges: [],
       };
 
       const filename1 = generateImageFileName(slug, data1);
@@ -172,7 +172,7 @@ slug: "quoted-slug"
       const url: QuiverUrl = {
         url: 'https://q.uiver.app/#q=abc123',
         encodedData: 'abc123',
-        position: { start: 20, end: 49 } // URLのみ（29文字）
+        position: { start: 20, end: 49 }, // URLのみ（29文字）
       };
       const imagePath = './images/diagram.svg';
 
@@ -187,7 +187,7 @@ slug: "quoted-slug"
       const url: QuiverUrl = {
         url: 'https://q.uiver.app/#q=xyz789',
         encodedData: 'xyz789',
-        position: { start: 0, end: 29 }
+        position: { start: 0, end: 29 },
       };
       const imagePath = './images/test.svg';
 
@@ -201,7 +201,7 @@ slug: "quoted-slug"
       const url: QuiverUrl = {
         url: 'https://q.uiver.app/#q=end123',
         encodedData: 'end123',
-        position: { start: 5, end: 35 }
+        position: { start: 5, end: 35 },
       };
       const imagePath = './images/final.svg';
 
@@ -264,7 +264,7 @@ describe('Property-Based Tests', () => {
   /**
    * **Feature: quiver-image-generator, Property 6: URL置換の正確性**
    * **Validates: Requirements 1.5**
-   * 
+   *
    * 任意のマークダウンコンテンツとQuiverのURLに対して、置換後の
    * コンテンツには元のURLが含まれず、画像参照が含まれるべきである
    */
@@ -288,8 +288,8 @@ describe('Property-Based Tests', () => {
         quiverUrl: {
           url: quiverUrl,
           encodedData: url.encodedData,
-          position: { start, end }
-        } as QuiverUrl
+          position: { start, end },
+        } as QuiverUrl,
       };
     });
 
@@ -299,14 +299,14 @@ describe('Property-Based Tests', () => {
       fc.stringMatching(/^[a-zA-Z0-9_-]{1,20}$/).map(name => `./${name}.svg`),
       fc.tuple(
         fc.stringMatching(/^[a-zA-Z0-9_-]{1,20}$/),
-        fc.stringMatching(/^[a-zA-Z0-9_-]{1,20}$/)
+        fc.stringMatching(/^[a-zA-Z0-9_-]{1,20}$/),
       ).map(([dir, name]) => `./${dir}/${name}.svg`),
 
       // 絶対パス風
       fc.tuple(
         fc.stringMatching(/^[a-zA-Z0-9_-]{1,20}$/),
-        fc.stringMatching(/^[a-zA-Z0-9_-]{1,20}$/)
-      ).map(([dir, name]) => `/images/${dir}/${name}.svg`)
+        fc.stringMatching(/^[a-zA-Z0-9_-]{1,20}$/),
+      ).map(([dir, name]) => `/images/${dir}/${name}.svg`),
     );
 
     fc.assert(
@@ -351,16 +351,16 @@ describe('Property-Based Tests', () => {
 
           expect(beforePart).toBe(content.substring(0, quiverUrl.position.start));
           expect(afterPart).toBe(content.substring(quiverUrl.position.end));
-        }
+        },
       ),
-      { numRuns: 100 } // 最低100回の反復を実行
+      { numRuns: 100 }, // 最低100回の反復を実行
     );
   });
 
   /**
    * **Feature: quiver-image-generator, Property 5: ファイル保存の成功**
    * **Validates: Requirements 1.4**
-   * 
+   *
    * 任意のSVG文字列とファイルパスに対して、保存後にそのパスに
    * ファイルが存在するべきである
    */
@@ -372,28 +372,28 @@ describe('Property-Based Tests', () => {
       fc.record({
         width: fc.integer({ min: 10, max: 1000 }),
         height: fc.integer({ min: 10, max: 1000 }),
-        content: fc.string()
+        content: fc.string(),
       }).map(({ width, height, content }) =>
-        `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">${content}</svg>`
+        `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">${content}</svg>`,
       ),
 
       // 円を含むSVG
       fc.record({
         cx: fc.integer({ min: 0, max: 500 }),
         cy: fc.integer({ min: 0, max: 500 }),
-        r: fc.integer({ min: 1, max: 100 })
+        r: fc.integer({ min: 1, max: 100 }),
       }).map(({ cx, cy, r }) =>
-        `<svg xmlns="http://www.w3.org/2000/svg"><circle cx="${cx}" cy="${cy}" r="${r}"/></svg>`
+        `<svg xmlns="http://www.w3.org/2000/svg"><circle cx="${cx}" cy="${cy}" r="${r}"/></svg>`,
       ),
 
       // パスを含むSVG
       fc.string().map((pathData) =>
-        `<svg xmlns="http://www.w3.org/2000/svg"><path d="${pathData}"/></svg>`
+        `<svg xmlns="http://www.w3.org/2000/svg"><path d="${pathData}"/></svg>`,
       ),
 
       // テキストを含むSVG
       fc.string().map((text) =>
-        `<svg xmlns="http://www.w3.org/2000/svg"><text>${text}</text></svg>`
+        `<svg xmlns="http://www.w3.org/2000/svg"><text>${text}</text></svg>`,
       ),
 
       // 空のSVG
@@ -404,23 +404,23 @@ describe('Property-Based Tests', () => {
         circles: fc.array(fc.record({
           cx: fc.integer({ min: 0, max: 500 }),
           cy: fc.integer({ min: 0, max: 500 }),
-          r: fc.integer({ min: 1, max: 50 })
+          r: fc.integer({ min: 1, max: 50 }),
         }), { maxLength: 5 }),
         rects: fc.array(fc.record({
           x: fc.integer({ min: 0, max: 500 }),
           y: fc.integer({ min: 0, max: 500 }),
           width: fc.integer({ min: 1, max: 100 }),
-          height: fc.integer({ min: 1, max: 100 })
-        }), { maxLength: 5 })
+          height: fc.integer({ min: 1, max: 100 }),
+        }), { maxLength: 5 }),
       }).map(({ circles, rects }) => {
         const circleElements = circles.map(c =>
-          `<circle cx="${c.cx}" cy="${c.cy}" r="${c.r}"/>`
+          `<circle cx="${c.cx}" cy="${c.cy}" r="${c.r}"/>`,
         ).join('');
         const rectElements = rects.map(r =>
-          `<rect x="${r.x}" y="${r.y}" width="${r.width}" height="${r.height}"/>`
+          `<rect x="${r.x}" y="${r.y}" width="${r.width}" height="${r.height}"/>`,
         ).join('');
         return `<svg xmlns="http://www.w3.org/2000/svg">${circleElements}${rectElements}</svg>`;
-      })
+      }),
     );
 
     // ファイル名のジェネレーター
@@ -434,8 +434,8 @@ describe('Property-Based Tests', () => {
       fc.stringMatching(/^[a-zA-Z0-9_-]{1,20}$/), // 1階層
       fc.tuple(
         fc.stringMatching(/^[a-zA-Z0-9_-]{1,20}$/),
-        fc.stringMatching(/^[a-zA-Z0-9_-]{1,20}$/)
-      ).map(([dir1, dir2]) => path.join(dir1, dir2)) // 2階層
+        fc.stringMatching(/^[a-zA-Z0-9_-]{1,20}$/),
+      ).map(([dir1, dir2]) => path.join(dir1, dir2)), // 2階層
     );
 
     await fc.assert(
@@ -463,15 +463,15 @@ describe('Property-Based Tests', () => {
           // ファイルサイズが0より大きいことを確認（空でない）
           const stats = await fs.stat(filePath);
           expect(stats.size).toBeGreaterThan(0);
-        }
+        },
       ),
-      { numRuns: 100 } // 最低100回の反復を実行
+      { numRuns: 100 }, // 最低100回の反復を実行
     );
   });
   /**
    * **Feature: quiver-image-generator, Property 7: ファイル名形式の遵守**
    * **Validates: Requirements 2.1**
-   * 
+   *
    * 生成されるファイル名は常に `{slug}-diagram-{uniqueId}.svg` の形式であるべきである
    */
   it('Property 7: ファイル名形式の遵守 - 指定された形式に従う', () => {
@@ -483,15 +483,15 @@ describe('Property-Based Tests', () => {
             id: fc.integer(),
             x: fc.integer(),
             y: fc.integer(),
-            label: fc.string()
+            label: fc.string(),
           })),
           edges: fc.array(fc.record({
             id: fc.integer(),
             source: fc.integer(),
             target: fc.integer(),
             label: fc.string(),
-            style: fc.string() // 簡易的なスタイル
-          }))
+            style: fc.string(), // 簡易的なスタイル
+          })),
         }),
         (slug, data) => {
           const filename = generateImageFileName(slug, data as DiagramData);
@@ -500,15 +500,15 @@ describe('Property-Based Tests', () => {
           // uniqueIdは8文字の16進数
           const regex = new RegExp(`^${slug}-diagram-[a-f0-9]{8}\\.svg$`);
           expect(filename).toMatch(regex);
-        }
-      )
+        },
+      ),
     );
   });
 
   /**
    * **Feature: quiver-image-generator, Property 8: slug抽出の成功**
    * **Validates: Requirements 2.2**
-   * 
+   *
    * 任意のマークダウンファイルパスまたはメタデータに対して、
    * 有効なslugが抽出されるべきである
    */
@@ -517,7 +517,7 @@ describe('Property-Based Tests', () => {
     const frontmatterContentArbitrary = fc.record({
       slug: fc.stringMatching(/^[a-zA-Z0-9_-]{1,50}$/),
       title: fc.string({ maxLength: 100 }),
-      otherFields: fc.string({ maxLength: 200 })
+      otherFields: fc.string({ maxLength: 200 }),
     }).map(({ slug, title, otherFields }) => {
       // フロントマターの形式を様々にする
       const formats = [
@@ -539,10 +539,10 @@ describe('Property-Based Tests', () => {
     const filePathArbitrary = fc.record({
       dir: fc.stringMatching(/^[a-zA-Z0-9_-]{1,20}$/),
       filename: fc.stringMatching(/^[a-zA-Z0-9_-]{1,50}$/),
-      ext: fc.constantFrom('.md', '.markdown')
+      ext: fc.constantFrom('.md', '.markdown'),
     }).map(({ dir, filename, ext }) => ({
       path: path.join('/', dir, filename + ext),
-      expectedSlugFromFilename: filename
+      expectedSlugFromFilename: filename,
     }));
 
     // テスト1: フロントマターからslugを抽出
@@ -559,9 +559,9 @@ describe('Property-Based Tests', () => {
           expect(slug.length).toBeGreaterThan(0);
           // slugは有効な文字のみを含むべき
           expect(slug).toMatch(/^[a-zA-Z0-9_-]+$/);
-        }
+        },
       ),
-      { numRuns: 100 }
+      { numRuns: 100 },
     );
 
     // テスト2: フロントマターがない場合、ファイル名からslugを抽出
@@ -576,15 +576,15 @@ describe('Property-Based Tests', () => {
           expect(slug).toBe(expectedSlugFromFilename);
           // slugは空でないべき
           expect(slug.length).toBeGreaterThan(0);
-        }
+        },
       ),
-      { numRuns: 100 }
+      { numRuns: 100 },
     );
 
     // テスト3: フロントマターにslugがない場合、ファイル名からslugを抽出
     const frontmatterWithoutSlugArbitrary = fc.record({
       title: fc.string({ maxLength: 100 }),
-      date: fc.string({ maxLength: 20 })
+      date: fc.string({ maxLength: 20 }),
     }).map(({ title, date }) => {
       const content = `---\ntitle: ${title}\ndate: ${date}\n---\n\n# Content`;
       return { content };
@@ -601,16 +601,16 @@ describe('Property-Based Tests', () => {
           expect(slug).toBe(expectedSlugFromFilename);
           // slugは空でないべき
           expect(slug.length).toBeGreaterThan(0);
-        }
+        },
       ),
-      { numRuns: 100 }
+      { numRuns: 100 },
     );
   });
 
   /**
    * **Feature: quiver-image-generator, Property 9: image-descriptionの一意性**
    * **Validates: Requirements 2.4**
-   * 
+   *
    * 任意の同じslugを持つ複数の異なる図式データに対して、
    * 生成されるすべてのimage-descriptionは互いに異なるべきである
    */
@@ -622,9 +622,9 @@ describe('Property-Based Tests', () => {
           id: fc.integer({ min: 0, max: 100 }),
           x: fc.integer({ min: -1000, max: 1000 }),
           y: fc.integer({ min: -1000, max: 1000 }),
-          label: fc.string({ maxLength: 50 })
+          label: fc.string({ maxLength: 50 }),
         }),
-        { minLength: 1, maxLength: 10 }
+        { minLength: 1, maxLength: 10 },
       ),
       edges: fc.array(
         fc.record({
@@ -635,11 +635,11 @@ describe('Property-Based Tests', () => {
           style: fc.option(fc.record({
             bodyName: fc.option(fc.string({ maxLength: 20 })),
             headName: fc.option(fc.string({ maxLength: 20 })),
-            offset: fc.option(fc.integer({ min: -100, max: 100 }))
-          }))
+            offset: fc.option(fc.integer({ min: -100, max: 100 })),
+          })),
         }),
-        { maxLength: 15 }
-      )
+        { maxLength: 15 },
+      ),
     }) as fc.Arbitrary<DiagramData>;
 
     // 同じslugで複数の異なる図式データを生成
@@ -687,9 +687,9 @@ describe('Property-Based Tests', () => {
           // すべてのimage-descriptionが一意であることを確認
           const uniqueDescriptions = new Set(imageDescriptions);
           expect(uniqueDescriptions.size).toBe(imageDescriptions.length);
-        }
+        },
       ),
-      { numRuns: 100 } // 最低100回の反復を実行
+      { numRuns: 100 }, // 最低100回の反復を実行
     );
   });
 });

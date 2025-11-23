@@ -17,7 +17,7 @@ describe('decodeQuiverData', () => {
       2, // nodeCount
       [0, 0, 'A'], // node 0
       [1, 0, 'B'], // node 1
-      [0, 1, 'f']  // edge 0
+      [0, 1, 'f'],  // edge 0
     ];
     const jsonString = JSON.stringify(data);
     const encodedData = Buffer.from(jsonString, 'utf-8').toString('base64');
@@ -33,13 +33,13 @@ describe('decodeQuiverData', () => {
 
   it('不正なBase64データでエラーをスローする', () => {
     const invalidData = 'not-valid-base64!!!';
-    
+
     expect(() => decodeQuiverData(invalidData)).toThrow();
   });
 
   it('不正なJSONフォーマットでエラーをスローする', () => {
     const invalidJson = Buffer.from('not json', 'utf-8').toString('base64');
-    
+
     expect(() => decodeQuiverData(invalidJson)).toThrow();
   });
 
@@ -47,7 +47,7 @@ describe('decodeQuiverData', () => {
     // 配列ではない
     const data = { nodes: [], edges: [] };
     const encodedData = Buffer.from(JSON.stringify(data), 'utf-8').toString('base64');
-    
+
     expect(() => decodeQuiverData(encodedData)).toThrow();
   });
 });
@@ -57,11 +57,11 @@ describe('validateDiagramData', () => {
     const data: DiagramData = {
       nodes: [
         { id: 0, x: 0, y: 0, label: 'A' },
-        { id: 1, x: 1, y: 0, label: 'B' }
+        { id: 1, x: 1, y: 0, label: 'B' },
       ],
       edges: [
-        { id: 0, source: 0, target: 1, label: 'f' }
-      ]
+        { id: 0, source: 0, target: 1, label: 'f' },
+      ],
     };
 
     expect(validateDiagramData(data)).toBe(true);
@@ -71,9 +71,9 @@ describe('validateDiagramData', () => {
     const data: DiagramData = {
       nodes: [
         { id: 0, x: 0, y: 0, label: 'A' },
-        { id: 0, x: 1, y: 0, label: 'B' } // 重複ID
+        { id: 0, x: 1, y: 0, label: 'B' }, // 重複ID
       ],
-      edges: []
+      edges: [],
     };
 
     expect(validateDiagramData(data)).toBe(false);
@@ -82,11 +82,11 @@ describe('validateDiagramData', () => {
   it('存在しないノードを参照するエッジを検出する', () => {
     const data: DiagramData = {
       nodes: [
-        { id: 0, x: 0, y: 0, label: 'A' }
+        { id: 0, x: 0, y: 0, label: 'A' },
       ],
       edges: [
-        { id: 0, source: 0, target: 999 } // 存在しないノード
-      ]
+        { id: 0, source: 0, target: 999 }, // 存在しないノード
+      ],
     };
 
     expect(validateDiagramData(data)).toBe(false);
@@ -96,12 +96,12 @@ describe('validateDiagramData', () => {
     const data: DiagramData = {
       nodes: [
         { id: 0, x: 0, y: 0, label: 'A' },
-        { id: 1, x: 1, y: 0, label: 'B' }
+        { id: 1, x: 1, y: 0, label: 'B' },
       ],
       edges: [
         { id: 0, source: 0, target: 1 },
-        { id: 0, source: 1, target: 0 } // 重複ID
-      ]
+        { id: 0, source: 1, target: 0 }, // 重複ID
+      ],
     };
 
     expect(validateDiagramData(data)).toBe(false);
@@ -111,7 +111,7 @@ describe('validateDiagramData', () => {
 /**
  * **Feature: quiver-image-generator, Property 3: デコードの往復一貫性**
  * **検証対象: 要件 3.2**
- * 
+ *
  * 任意の図式データに対して、エンコードしてからデコードすると、
  * 元のデータと等価なデータが得られるべきである
  */
@@ -159,16 +159,16 @@ describe('Property 3: デコードの往復一貫性', () => {
     const nodesArb: fc.Arbitrary<readonly Node[]> = nodeCount === 0
       ? fc.constant([])
       : fc.array(
-          fc.integer({ min: 0, max: nodeCount - 1 }).chain(id => nodeArb(id)),
-          { minLength: nodeCount, maxLength: nodeCount }
-        ).map(nodes => {
-          // IDを0から順に振り直す
-          return nodes.map((node, index) => ({ ...node, id: index }));
-        });
+        fc.integer({ min: 0, max: nodeCount - 1 }).chain(id => nodeArb(id)),
+        { minLength: nodeCount, maxLength: nodeCount },
+      ).map(nodes => {
+        // IDを0から順に振り直す
+        return nodes.map((node, index) => ({ ...node, id: index }));
+      });
 
     const edgesArb: fc.Arbitrary<readonly Edge[]> = fc.array(
       fc.integer({ min: 0, max: 20 }).chain(id => edgeArb(id, nodeCount)),
-      { minLength: 0, maxLength: 20 }
+      { minLength: 0, maxLength: 20 },
     ).map(edges => {
       // nullを除外してIDを振り直す
       return edges
@@ -227,7 +227,7 @@ describe('Property 3: デコードの往復一貫性', () => {
           }
         }
       }),
-      { numRuns: 100 } // 100回の反復を実行
+      { numRuns: 100 }, // 100回の反復を実行
     );
   });
 });
@@ -235,7 +235,7 @@ describe('Property 3: デコードの往復一貫性', () => {
 /**
  * **Feature: quiver-image-generator, Property 10: 不正データのエラー処理**
  * **検証対象: 要件 3.3**
- * 
+ *
  * 任意の不正な形式の図式データに対して、デコード処理はエラーを返すべきである
  */
 describe('Property 10: 不正データのエラー処理', () => {
@@ -263,8 +263,8 @@ describe('Property 10: 不正データのエラー処理', () => {
       fc.constant(2),
       fc.tuple(fc.constant(0), fc.constant(0), fc.constant('A')),
       fc.tuple(fc.constant(1), fc.constant(0), fc.constant('B')),
-      fc.tuple(fc.string(), fc.integer())
-    ).map(arr => Buffer.from(JSON.stringify(arr), 'utf-8').toString('base64'))
+      fc.tuple(fc.string(), fc.integer()),
+    ).map(arr => Buffer.from(JSON.stringify(arr), 'utf-8').toString('base64')),
   );
 
   it('任意の不正なデータに対してエラーをスローする', () => {
@@ -273,7 +273,7 @@ describe('Property 10: 不正データのエラー処理', () => {
         // 不正なデータをデコードしようとするとエラーがスローされるべき
         expect(() => decodeQuiverData(invalidData)).toThrow();
       }),
-      { numRuns: 100 } // 100回の反復を実行
+      { numRuns: 100 }, // 100回の反復を実行
     );
   });
 });

@@ -16,17 +16,17 @@ vi.mock('./svg-generator', () => ({
 describe('processSingleUrl', () => {
   const testDir = path.join(process.cwd(), 'test-output');
   const imagesDir = path.join(testDir, 'images');
-  
+
   beforeEach(async () => {
     // テスト用ディレクトリを作成
     await fs.mkdir(imagesDir, { recursive: true });
   });
-  
+
   afterEach(async () => {
     // テスト用ディレクトリをクリーンアップ
     await fs.rm(testDir, { recursive: true, force: true });
   });
-  
+
   it('should generate SVG for new URL', async () => {
     // 有効なQuiverのURLとデータ（新形式）
     const encodedData = Buffer.from(JSON.stringify([
@@ -34,21 +34,21 @@ describe('processSingleUrl', () => {
       [0, 0, 'A'], [1, 0, 'B'], // nodes
       [0, 1, 'f'], // edges
     ])).toString('base64');
-    
+
     const quiverUrl: QuiverUrl = {
       url: `https://q.uiver.app/#q=${encodedData}`,
       encodedData,
       position: { start: 0, end: 100 },
     };
-    
+
     const config = {
       strategy: 'browser' as const,
       input: quiverUrl.url,
     };
-    
+
     const cache: ReadonlyArray<CacheEntry> = [];
     const markdownDir = testDir;
-    
+
     const result = await processSingleUrl(
       quiverUrl,
       config,
@@ -57,17 +57,17 @@ describe('processSingleUrl', () => {
       imagesDir,
       markdownDir,
     );
-    
+
     // 結果の検証
     expect(result.shouldReplace).toBe(true);
     expect(result.imagePath).toMatch(/.*\.svg$/);
-    
+
     // ファイルが実際に作成されたか確認
     const fullPath = path.join(imagesDir, path.basename(result.imagePath));
     const exists = await fs.access(fullPath).then(() => true).catch(() => false);
     expect(exists).toBe(true);
   });
-  
+
   it('should skip generation for cached URL with existing file', async () => {
     // 有効なQuiverのURLとデータ（新形式）
     const encodedData = Buffer.from(JSON.stringify([
@@ -75,18 +75,18 @@ describe('processSingleUrl', () => {
       [0, 0, 'A'], [1, 0, 'B'], // nodes
       [0, 1, 'f'], // edges
     ])).toString('base64');
-    
+
     const quiverUrl: QuiverUrl = {
       url: `https://q.uiver.app/#q=${encodedData}`,
       encodedData,
       position: { start: 0, end: 100 },
     };
-    
+
     // 既存のファイルを作成
     const existingFileName = 'test-article-diagram-12345678.svg';
     const existingFilePath = path.join(imagesDir, existingFileName);
     await fs.writeFile(existingFilePath, '<svg></svg>', 'utf-8');
-    
+
     const cache: ReadonlyArray<CacheEntry> = [
       {
         url: quiverUrl.url,
@@ -95,14 +95,14 @@ describe('processSingleUrl', () => {
         timestamp: Date.now(),
       },
     ];
-    
+
     const config = {
       strategy: 'browser' as const,
       input: quiverUrl.url,
     };
-    
+
     const markdownDir = testDir;
-    
+
     const result = await processSingleUrl(
       quiverUrl,
       config,
@@ -111,12 +111,12 @@ describe('processSingleUrl', () => {
       imagesDir,
       markdownDir,
     );
-    
+
     // キャッシュヒット: 置換不要
     expect(result.shouldReplace).toBe(false);
     expect(result.imagePath).toBe(existingFilePath);
   });
-  
+
   it('should regenerate SVG when URL data changes', async () => {
     // 元のデータ（新形式）
     const oldEncodedData = Buffer.from(JSON.stringify([
@@ -124,25 +124,25 @@ describe('processSingleUrl', () => {
       [0, 0, 'A'], [1, 0, 'B'], // nodes
       [0, 1, 'f'], // edges
     ])).toString('base64');
-    
+
     // 新しいデータ（新形式）
     const newEncodedData = Buffer.from(JSON.stringify([
       0, 2, // version, nodeCount
       [0, 0, 'X'], [1, 0, 'Y'], // nodes
       [0, 1, 'g'], // edges
     ])).toString('base64');
-    
+
     const quiverUrl: QuiverUrl = {
       url: `https://q.uiver.app/#q=${newEncodedData}`,
       encodedData: newEncodedData,
       position: { start: 0, end: 100 },
     };
-    
+
     // 古いデータでキャッシュエントリを作成
     const oldFileName = 'test-article-diagram-old.svg';
     const oldFilePath = path.join(imagesDir, oldFileName);
     await fs.writeFile(oldFilePath, '<svg>old</svg>', 'utf-8');
-    
+
     const cache: ReadonlyArray<CacheEntry> = [
       {
         url: quiverUrl.url,
@@ -151,14 +151,14 @@ describe('processSingleUrl', () => {
         timestamp: Date.now(),
       },
     ];
-    
+
     const config = {
       strategy: 'browser' as const,
       input: quiverUrl.url,
     };
-    
+
     const markdownDir = testDir;
-    
+
     const result = await processSingleUrl(
       quiverUrl,
       config,
@@ -167,7 +167,7 @@ describe('processSingleUrl', () => {
       imagesDir,
       markdownDir,
     );
-    
+
     // URL変更: 再生成が必要
     expect(result.shouldReplace).toBe(true);
     expect(result.imagePath).toMatch(/.*\.svg$/);
@@ -178,18 +178,17 @@ describe('processSingleUrl', () => {
 describe('processMarkdownFile', () => {
   const testDir = path.join(process.cwd(), 'test-output-markdown');
   const markdownPath = path.join(testDir, 'test-article.md');
-  const imagesDir = path.join(testDir, 'images');
-  
+
   beforeEach(async () => {
     // テスト用ディレクトリを作成
     await fs.mkdir(testDir, { recursive: true });
   });
-  
+
   afterEach(async () => {
     // テスト用ディレクトリをクリーンアップ
     await fs.rm(testDir, { recursive: true, force: true });
   });
-  
+
   it('should process markdown file with Quiver URLs', async () => {
     // テスト用のマークダウンコンテンツを作成（新形式）
     const encodedData = Buffer.from(JSON.stringify([
@@ -197,7 +196,7 @@ describe('processMarkdownFile', () => {
       [0, 0, 'A'], [1, 0, 'B'], // nodes
       [0, 1, 'f'], // edges
     ])).toString('base64');
-    
+
     const quiverUrl = `https://q.uiver.app/#q=${encodedData}`;
     const markdownContent = `# Test Article
 
@@ -206,37 +205,37 @@ This is a test article with a Quiver diagram:
 ${quiverUrl}
 
 End of article.`;
-    
+
     // マークダウンファイルを作成
     await fs.writeFile(markdownPath, markdownContent, 'utf-8');
-    
+
     const config = {
       strategy: 'browser' as const,
       input: quiverUrl,
     };
-    
+
     const cache: ReadonlyArray<CacheEntry> = [];
-    
+
     // processMarkdownFileをインポート
     const { processMarkdownFile } = await import('./process-url');
-    
+
     const result = await processMarkdownFile(markdownPath, config, cache);
-    
+
     // 結果の検証
     expect(result.generatedImages.length).toBe(1);
     expect(result.generatedImages[0]).toMatch(/.*\.svg$/);
     expect(result.updatedCache.length).toBe(1);
-    
+
     // コンテンツが更新されたか確認（リンク付き画像になっている）
     expect(result.updatedContent).toContain('[![diagram]');
     expect(result.updatedContent).toContain(`](${quiverUrl})`);
-    
+
     // ファイルが更新されたか確認
     const updatedContent = await fs.readFile(markdownPath, 'utf-8');
     expect(updatedContent).toContain('[![diagram]');
     expect(updatedContent).toContain(`](${quiverUrl})`);
   });
-  
+
   it('should handle markdown file with no Quiver URLs', async () => {
     // QuiverのURLを含まないマークダウンコンテンツ
     const markdownContent = `# Test Article
@@ -244,27 +243,27 @@ End of article.`;
 This is a test article without any Quiver diagrams.
 
 Just plain text.`;
-    
+
     // マークダウンファイルを作成
     await fs.writeFile(markdownPath, markdownContent, 'utf-8');
-    
+
     const config = {
       strategy: 'browser' as const,
       input: 'https://q.uiver.app/#q=test',
     };
-    
+
     const cache: ReadonlyArray<CacheEntry> = [];
-    
+
     const { processMarkdownFile } = await import('./process-url');
-    
+
     const result = await processMarkdownFile(markdownPath, config, cache);
-    
+
     // 結果の検証
     expect(result.generatedImages.length).toBe(0);
     expect(result.updatedCache.length).toBe(0);
     expect(result.updatedContent).toBe(markdownContent);
   });
-  
+
   it('should process multiple Quiver URLs in markdown file', async () => {
     // 複数のQuiverのURLを含むマークダウンコンテンツ（新形式）
     const encodedData1 = Buffer.from(JSON.stringify([
@@ -272,16 +271,16 @@ Just plain text.`;
       [0, 0, 'A'], [1, 0, 'B'], // nodes
       [0, 1, 'f'], // edges
     ])).toString('base64');
-    
+
     const encodedData2 = Buffer.from(JSON.stringify([
       0, 2, // version, nodeCount
       [0, 0, 'X'], [1, 0, 'Y'], // nodes
       [0, 1, 'g'], // edges
     ])).toString('base64');
-    
+
     const quiverUrl1 = `https://q.uiver.app/#q=${encodedData1}`;
     const quiverUrl2 = `https://q.uiver.app/#q=${encodedData2}`;
-    
+
     const markdownContent = `# Test Article
 
 First diagram:
@@ -293,29 +292,29 @@ Second diagram:
 ${quiverUrl2}
 
 End of article.`;
-    
+
     // マークダウンファイルを作成
     await fs.writeFile(markdownPath, markdownContent, 'utf-8');
-    
+
     const config = {
       strategy: 'browser' as const,
       input: quiverUrl1,
     };
-    
+
     const cache: ReadonlyArray<CacheEntry> = [];
-    
+
     const { processMarkdownFile } = await import('./process-url');
-    
+
     const result = await processMarkdownFile(markdownPath, config, cache);
-    
+
     // 結果の検証
     expect(result.generatedImages.length).toBe(2);
     expect(result.updatedCache.length).toBe(2);
-    
+
     // 両方のURLがリンク付き画像に置換されたか確認
     expect(result.updatedContent).toContain(`](${quiverUrl1})`);
     expect(result.updatedContent).toContain(`](${quiverUrl2})`);
-    
+
     // 画像参照が2つ含まれているか確認
     const imageRefCount = (result.updatedContent.match(/!\[diagram\]/g) || []).length;
     expect(imageRefCount).toBe(2);

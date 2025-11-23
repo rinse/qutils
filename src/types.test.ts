@@ -5,20 +5,15 @@
 
 import { describe, it, expect } from 'vitest';
 import type {
-  Url,
   QuiverUrl,
   DiagramData,
   Node,
   Edge,
-  EdgeStyle,
   BrowserStrategy,
   SvgGenerationConfig,
   CacheEntry,
   QutilsError,
   UrlParseError,
-  DecodeError,
-  SvgGenerationError,
-  FileIoError,
 } from './types';
 
 describe('型定義の基本テスト', () => {
