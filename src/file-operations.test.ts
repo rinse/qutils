@@ -11,6 +11,7 @@ import {
   saveImageToFile,
   generateImageFileName,
   extractSlug,
+  extractContentType,
   replaceUrlWithImageRef,
   fileExists,
 } from './file-operations';
@@ -125,8 +126,9 @@ date: 2024-01-01
 
 # Content here`;
       const markdownPath = '/path/to/article.md';
+      const contentType = extractContentType(markdownPath);
 
-      const slug = extractSlug(markdownPath, content);
+      const slug = extractSlug(markdownPath, content, contentType);
 
       expect(slug).toBe('my-custom-slug');
     });
@@ -134,8 +136,9 @@ date: 2024-01-01
     it('should extract slug from filename if no frontmatter', () => {
       const content = '# Article without frontmatter';
       const markdownPath = '/path/to/my-article-name.md';
+      const contentType = extractContentType(markdownPath);
 
-      const slug = extractSlug(markdownPath, content);
+      const slug = extractSlug(markdownPath, content, contentType);
 
       expect(slug).toBe('my-article-name');
     });
@@ -148,8 +151,9 @@ date: 2024-01-01
 
 # Content`;
       const markdownPath = '/path/to/fallback-slug.md';
+      const contentType = extractContentType(markdownPath);
 
-      const slug = extractSlug(markdownPath, content);
+      const slug = extractSlug(markdownPath, content, contentType);
 
       expect(slug).toBe('fallback-slug');
     });
@@ -159,8 +163,9 @@ date: 2024-01-01
 slug: "quoted-slug"
 ---`;
       const markdownPath = '/path/to/article.md';
+      const contentType = extractContentType(markdownPath);
 
-      const slug = extractSlug(markdownPath, content);
+      const slug = extractSlug(markdownPath, content, contentType);
 
       expect(slug).toBe('quoted-slug');
     });
@@ -552,7 +557,8 @@ describe('Property-Based Tests', () => {
         frontmatterContentArbitrary,
         filePathArbitrary,
         ({ content, expectedSlug }, { path: filePath }) => {
-          const slug = extractSlug(filePath, content);
+          const contentType = extractContentType(filePath);
+          const slug = extractSlug(filePath, content, contentType);
 
           // フロントマターにslugがある場合、それが抽出されるべき
           expect(slug).toBe(expectedSlug);
@@ -571,7 +577,8 @@ describe('Property-Based Tests', () => {
         noFrontmatterContentArbitrary,
         filePathArbitrary,
         ({ content }, { path: filePath, expectedSlugFromFilename }) => {
-          const slug = extractSlug(filePath, content);
+          const contentType = extractContentType(filePath);
+          const slug = extractSlug(filePath, content, contentType);
 
           // ファイル名からslugが抽出されるべき
           expect(slug).toBe(expectedSlugFromFilename);
@@ -596,7 +603,8 @@ describe('Property-Based Tests', () => {
         frontmatterWithoutSlugArbitrary,
         filePathArbitrary,
         ({ content }, { path: filePath, expectedSlugFromFilename }) => {
-          const slug = extractSlug(filePath, content);
+          const contentType = extractContentType(filePath);
+          const slug = extractSlug(filePath, content, contentType);
 
           // ファイル名からslugが抽出されるべき
           expect(slug).toBe(expectedSlugFromFilename);

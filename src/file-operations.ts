@@ -38,6 +38,7 @@ export const saveImageToFile = async (imageData: string | Buffer, filePath: stri
 
 /**
  * パスを正規化（Windowsのバックスラッシュをスラッシュに変換）
+ * 純粋関数: 副作用なし、同じ入力に対して常に同じ出力を返す
  *
  * @param filePath - 正規化するパス
  * @returns 正規化されたパス
@@ -91,6 +92,9 @@ export const extractContentType = (markdownPath: string): 'article' | 'book' => 
 
   // articlesにもbooksにも該当しない場合は警告を出力
   // Zennプロジェクト構造を前提としているため、デフォルトで'article'を返す
+  // 注: console.warnは副作用であり、関数型プログラミングの観点からは
+  // Result型やEither型でエラーケースを表現する方が望ましい
+  // 将来的な改善として、エラーハンドリングの一貫性を検討すること
   console.warn(`Warning: Path "${markdownPath}" does not match expected Zenn project structure (articles/ or books/). Defaulting to 'article'.`);
   return 'article';
 };
@@ -122,18 +126,17 @@ export const generateImageFileName = (
  * - articlesディレクトリ: ファイル名から取得
  * - booksディレクトリ: {book-slug}-{page-slug}の形式で生成
  *
- * 注: この関数は内部でextractContentTypeを呼び出します。
- * これは、extractSlugが単独で使用されるケースを想定しているためです。
- * 呼び出し側で既にcontent-typeを持っている場合でも、
- * パフォーマンスへの影響は軽微であり、関数の独立性を優先しています。
- *
  * @param markdownPath - マークダウンファイルのパス
  * @param content - マークダウンファイルの内容
+ * @param contentType - content-type ('article' または 'book')
  * @returns 抽出されたslug
  */
-export const extractSlug = (markdownPath: string, content: string): string => {
+export const extractSlug = (
+  markdownPath: string,
+  content: string,
+  contentType: 'article' | 'book',
+): string => {
   const normalizedPath = normalizePath(markdownPath);
-  const contentType = extractContentType(markdownPath);
 
   // フロントマターからslugを抽出を試みる
   const frontmatterMatch = content.match(/^---\s*\n([\s\S]*?)\n---/);

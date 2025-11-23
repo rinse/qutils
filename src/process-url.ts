@@ -5,7 +5,7 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import type { QuiverUrl, ImageGenerationConfig, CacheEntry } from './types';
+import type { QuiverUrl, ImageGenerationConfig, CacheEntry, FileIoError } from './types';
 import { decodeQuiverData } from './decoder';
 import { generateImage } from './image-generator';
 import { generateImageFileName, fileExists, extractSlug, extractContentType, replaceUrlWithImageRef } from './file-operations';
@@ -17,6 +17,26 @@ import { extractQuiverUrls } from './url-parser';
  * プロジェクトルートからの相対パス
  */
 const IMAGES_DIR_NAME = 'images';
+
+/**
+ * ディレクトリが存在することを保証（存在しない場合は作成）
+ * 純粋でない関数: ファイルシステムへの副作用あり
+ *
+ * @param dirPath - 確認・作成するディレクトリのパス
+ * @throws FileIoError ディレクトリの作成に失敗した場合
+ */
+const ensureDirectoryExists = async (dirPath: string): Promise<void> => {
+  try {
+    await fs.mkdir(dirPath, { recursive: true });
+  } catch (error) {
+    const fileIoError: FileIoError = {
+      type: 'file-io-error',
+      path: dirPath,
+      message: `Failed to create directory: ${error instanceof Error ? error.message : String(error)}`,
+    };
+    throw fileIoError;
+  }
+};
 
 /**
  * 単一のQuiverUrlを処理して画像を生成
@@ -121,8 +141,9 @@ export const processMarkdownFile = async (
   const content = await fs.readFile(filePath, 'utf-8');
 
   // 2. content-typeとslugを抽出
+  // contentTypeを先に計算し、extractSlugに渡すことで再計算を避ける
   const contentType = extractContentType(filePath);
-  const slug = extractSlug(filePath, content);
+  const slug = extractSlug(filePath, content, contentType);
 
   // 3. QuiverのURLを抽出
   const quiverUrls = extractQuiverUrls(content);
@@ -141,12 +162,9 @@ export const processMarkdownFile = async (
   const markdownDir = path.dirname(filePath);
   const imagesDir = path.join(workspaceRoot, IMAGES_DIR_NAME);
 
-  // imagesディレクトリが存在しない場合は作成
-  try {
-    await fs.mkdir(imagesDir, { recursive: true });
-  } catch (error) {
-    throw new Error(`Failed to create images directory: ${error instanceof Error ? error.message : String(error)}`);
-  }
+  // imagesディレクトリが存在することを保証
+  // ディレクトリ作成処理を別関数に抽出し、責務を分離
+  await ensureDirectoryExists(imagesDir);
 
   // 処理結果を蓄積するための変数
   // イミュータブルな更新を行うため、reduceを使用
