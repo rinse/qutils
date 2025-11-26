@@ -47,7 +47,6 @@ describe('processSingleUrl', () => {
     };
 
     const cache: ReadonlyArray<CacheEntry> = [];
-    const markdownDir = testDir;
 
     const result = await processSingleUrl(
       quiverUrl,
@@ -56,12 +55,12 @@ describe('processSingleUrl', () => {
       'test-article',
       cache,
       imagesDir,
-      markdownDir,
+      testDir,
     );
 
     // 結果の検証
     expect(result.shouldReplace).toBe(true);
-    expect(result.imagePath).toMatch(/.*\.png$/);
+    expect(result.imagePath).toMatch(/^\/.*\.png$/); // 絶対パス（/始まり）
   });
 
   it('should skip generation for cached URL with existing file', async () => {
@@ -97,8 +96,6 @@ describe('processSingleUrl', () => {
       input: quiverUrl.url,
     };
 
-    const markdownDir = testDir;
-
     const result = await processSingleUrl(
       quiverUrl,
       config,
@@ -106,7 +103,7 @@ describe('processSingleUrl', () => {
       'test-article',
       cache,
       imagesDir,
-      markdownDir,
+      testDir,
     );
 
     // キャッシュヒット: 置換不要
@@ -154,8 +151,6 @@ describe('processSingleUrl', () => {
       input: quiverUrl.url,
     };
 
-    const markdownDir = testDir;
-
     const result = await processSingleUrl(
       quiverUrl,
       config,
@@ -163,12 +158,12 @@ describe('processSingleUrl', () => {
       'test-article',
       cache,
       imagesDir,
-      markdownDir,
+      testDir,
     );
 
     // URL変更: 再生成が必要
     expect(result.shouldReplace).toBe(true);
-    expect(result.imagePath).toMatch(/.*\.png$/);
+    expect(result.imagePath).toMatch(/^\/.*\.png$/); // 絶対パス（/始まり）
   });
 });
 
@@ -221,7 +216,7 @@ End of article.`;
 
     // 結果の検証
     expect(result.generatedImages.length).toBe(1);
-    expect(result.generatedImages[0]).toMatch(/.*\.png$/);
+    expect(result.generatedImages[0]).toMatch(/^\/.*\.png$/); // 絶対パス（/始まり）
     expect(result.updatedCache.length).toBe(1);
 
     // コンテンツが更新されたか確認（リンク付き画像になっている）

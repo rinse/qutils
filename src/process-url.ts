@@ -52,7 +52,7 @@ const ensureDirectoryExists = async (dirPath: string): Promise<void> => {
  * @param slug - 記事のslug（ファイル名生成に使用）
  * @param cache - 現在のキャッシュエントリの配列
  * @param imagesDir - 画像を保存するディレクトリのパス
- * @param markdownDir - マークダウンファイルのディレクトリ（相対パス計算に使用）
+ * @param workspaceRoot - ワークスペースのルートディレクトリ（絶対パス計算に使用）
  * @returns 画像パスと置換すべきかどうかのフラグ
  *
  * 要件: 1.1, 1.2, 1.3, 1.4, 5.1, 5.2, 5.3
@@ -64,7 +64,7 @@ export const processSingleUrl = async (
   slug: string,
   cache: ReadonlyArray<CacheEntry>,
   imagesDir: string,
-  markdownDir: string,
+  workspaceRoot: string,
 ): Promise<{
   readonly imagePath: string;
   readonly shouldReplace: boolean;
@@ -99,11 +99,11 @@ export const processSingleUrl = async (
   // 3. 画像を生成（戦略に基づいて適切な生成方法が選択される）
   await generateImage(config, fullPath);
 
-  // 4. 相対パスを返す（マークダウンファイルから見た相対パス）
-  const relativePath = path.relative(markdownDir, fullPath).replace(/\\/g, '/');
+  // 4. プロジェクトルートからの絶対パスを返す（`/`始まり）
+  const absolutePath = '/' + path.relative(workspaceRoot, fullPath).replace(/\\/g, '/');
 
   return {
-    imagePath: relativePath,
+    imagePath: absolutePath,
     shouldReplace: true,
   };
 };
@@ -159,7 +159,6 @@ export const processMarkdownFile = async (
 
   // 4. 各URLを処理
   // ディレクトリパスを計算
-  const markdownDir = path.dirname(filePath);
   const imagesDir = path.join(workspaceRoot, IMAGES_DIR_NAME);
 
   // imagesディレクトリが存在することを保証
@@ -204,7 +203,7 @@ export const processMarkdownFile = async (
           slug,
           state.cache,
           imagesDir,
-          markdownDir,
+          workspaceRoot,
         );
 
         // 置換が必要な場合のみコンテンツを更新
