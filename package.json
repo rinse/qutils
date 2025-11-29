@@ -38,7 +38,8 @@
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
     "package": "vsce package",
-    "build": "npm run compile && npm run package"
+    "build": "npm run compile && npm run package",
+    "install": "npm run build && code --install-extension qutils-0.1.0.vsix"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

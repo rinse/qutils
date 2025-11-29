@@ -7,7 +7,6 @@ src/**
 .code-review/**
 .wt/**
 test-output/**
-node_modules/**
 tsconfig.json
 vitest.config.ts
 eslint.config.js
